@@ -4,6 +4,23 @@ const mongoose = require('mongoose');
 const Download = require('../models/downloads'); // Importa el modelo de descargas
 const debug = require('debug')('downloads-2:server');
 
+/**
+ * @swagger
+ * /downloads:
+ *   get:
+ *     summary: Obtiene todas las descargas.
+ *     responses:
+ *       200:
+ *         description: Lista de descargas obtenida exitosamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Download'
+ *       500:
+ *         description: Error en el servidor.
+ * /
 /* GET /downloads - Obtener todas las descargas */
 router.get('/', async function(req, res, next) {
   try {
@@ -30,6 +47,34 @@ router.get('/:id', async function(req, res, next) {
   }
 });
 
+
+/*
+*   post:
+*     summary: Crea una nueva descarga.
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             properties:
+*               usuarioId:
+*                 type: string
+*               libro:
+*                 type: string
+*               formato:
+*                 type: string
+*                 default: PDF
+*     responses:
+*       201:
+*         description: Descarga creada exitosamente.
+*         content:
+*           application/json:
+*             schema:
+*               $ref: '#/components/schemas/Download'
+*       500:
+* /        description: Error en el servidor.
+
 /* POST /downloads - Crear una nueva descarga */
 router.post('/', async function(req, res, next) {
   const { usuarioId, libro, formato } = req.body; // Obtener los datos del cuerpo de la solicitud
@@ -50,6 +95,42 @@ router.post('/', async function(req, res, next) {
   }
 })
 
+/*
+ *   put:
+ *     summary: Actualiza una descarga por ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de la descarga.
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               usuarioId:
+ *                 type: string
+ *               libro:
+ *                 type: string
+ *               formato:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Descarga actualizada exitosamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Download'
+ *       404:
+ *         description: Descarga no encontrada.
+ *       500:
+ *         description: Error en el servidor.
+ * /
+ * 
 /* PUT /downloads/:id - Actualizar una descarga */
 router.put('/:id', async function(req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
@@ -75,6 +156,24 @@ router.put('/:id', async function(req, res, next) {
   }
 });
 
+
+/* DELETE:
+ *     summary: Elimina una descarga por ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de la descarga.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Descarga eliminada exitosamente.
+ *       404:
+ *         description: Descarga no encontrada.
+ *       500:
+ *         description: Error en el servidor.
+ */
 /* DELETE /downloads/:id - Eliminar una descarga */
 router.delete('/:id', async function(req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
