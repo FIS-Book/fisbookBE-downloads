@@ -32,4 +32,36 @@ mongoose.connect(uri, {
 
 module.exports = app;
 
+// Conexión a Swagger
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 
+const app = express();
+
+// Swagger definition
+const swaggerOptions = {
+  swaggerDefinition: {
+    info: {
+      title: 'My API',
+      description: 'API documentation for my project',
+      version: '1.0.0',
+    },
+    servers: [
+      {
+        url: 'http://localhost:3000', // Change this to your server URL if different
+      },
+    ],
+  },
+  apis: ['./routes/*.js'], // Path to the API docs (your route files)
+};
+
+// Initialize SwaggerJSDoc
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+app.listen(3000, () => {
+  console.log('Server running on http://localhost:3000');
+  console.log('Swagger documentation available at http://localhost:3000/api-docs');
+});
