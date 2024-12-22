@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
 const Download = require('../models/downloads'); // Importa el modelo de descargas
 const debug = require('debug')('downloads-2:server');
 

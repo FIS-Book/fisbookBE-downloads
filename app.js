@@ -5,7 +5,7 @@ var logger = require('morgan');
 require('dotenv').config(); // Cargar variables de entorno
 
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/downloads');
+var downloadsRouter = require('./routes/downloads');
 
 var app = express(); // Declaración única de 'app'
 
@@ -16,7 +16,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/downloads', usersRouter);
+app.use('/api-v1/downloads', downloadsRouter);
 
 // Conexión a MongoDB
 const mongoose = require('mongoose');
