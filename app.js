@@ -57,7 +57,7 @@ const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Iniciar el servidor
-const PORT = process.env.PORT || 2000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🌟 Servidor corriendo en http://localhost:${PORT}`);
   console.log(`📖 Documentación Swagger disponible en http://localhost:${PORT}/api-docs`);
