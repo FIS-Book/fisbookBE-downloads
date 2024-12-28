@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
 const Download = require('../models/downloads'); // Importa el modelo de descargas
 const debug = require('debug')('downloads-2:server');
 
@@ -21,8 +20,9 @@ const debug = require('debug')('downloads-2:server');
  *       500:
  *         description: Error en el servidor.
  * /
+
 /* GET /downloads - Obtener todas las descargas */
-router.get('/', async function(req, res, next) {
+router.get('/', async function (req, res, next) {
   try {
     const result = await Download.find(); // Obtiene todas las descargas desde la base de datos
     res.json(result.map((c) => c.cleanup())); // Devuelve las descargas con limpieza de atributos
@@ -32,8 +32,33 @@ router.get('/', async function(req, res, next) {
   }
 });
 
+/**
+ * @swagger
+ * /downloads/{id}:
+ *   get:
+ *     summary: Obtiene una descarga por ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de la descarga.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Descarga obtenida exitosamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Download'
+ *       404:
+ *         description: Descarga no encontrada.
+ *       500:
+ *         description: Error en el servidor.
+ */
+
 /* GET /downloads/:id - Obtener una descarga por ID */
-router.get('/:id', async function(req, res, next) {
+router.get('/:id', async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   try {
     const download = await Download.findById(id); // Buscar la descarga por ID en la base de datos
@@ -76,14 +101,14 @@ router.get('/:id', async function(req, res, next) {
 * /        description: Error en el servidor.
 
 /* POST /downloads - Crear una nueva descarga */
-router.post('/', async function(req, res, next) {
+router.post('/', async function (req, res, next) {
   const { usuarioId, libro, formato } = req.body; // Obtener los datos del cuerpo de la solicitud
 
   const newDownload = new Download({
     usuarioId,
     libro,
     formato: formato || 'PDF', // Si no se proporciona formato, se asigna 'PDF' por defecto
-    fecha: new Date().toISOString().split('T')[0] // Fecha actual en formato 'YYYY-MM-DD'
+    fecha: new Date().toISOString().split('T')[0], // Fecha actual en formato 'YYYY-MM-DD'
   });
 
   try {
@@ -93,7 +118,45 @@ router.post('/', async function(req, res, next) {
     debug('DB problem', e);
     res.sendStatus(500); // En caso de error, responde con un código 500
   }
-})
+});
+
+/**
+ * @swagger
+ * /downloads/{id}:
+ *   put:
+ *     summary: Actualiza una descarga por ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de la descarga.
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               usuarioId:
+ *                 type: string
+ *               libro:
+ *                 type: string
+ *               formato:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Descarga actualizada exitosamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Download'
+ *       404:
+ *         description: Descarga no encontrada.
+ *       500:
+ *         description: Error en el servidor.
+ */
 
 /*
  *   put:
@@ -132,7 +195,7 @@ router.post('/', async function(req, res, next) {
  * /
  * 
 /* PUT /downloads/:id - Actualizar una descarga */
-router.put('/:id', async function(req, res, next) {
+router.put('/:id', async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   const { usuarioId, libro, formato } = req.body; // Obtener los datos a actualizar
 
@@ -157,7 +220,10 @@ router.put('/:id', async function(req, res, next) {
 });
 
 
-/* DELETE:
+/**
+ * @swagger
+ * /downloads/{id}:
+ *   delete:
  *     summary: Elimina una descarga por ID.
  *     parameters:
  *       - in: path
@@ -174,8 +240,9 @@ router.put('/:id', async function(req, res, next) {
  *       500:
  *         description: Error en el servidor.
  */
+
 /* DELETE /downloads/:id - Eliminar una descarga */
-router.delete('/:id', async function(req, res, next) {
+router.delete('/:id', async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
 
   try {
