@@ -19,7 +19,7 @@ const debug = require('debug')('downloads-2:server');
  *                 $ref: '#/components/schemas/Download'
  *       500:
  *         description: Error en el servidor.
- */
+ * /
 
 /* GET /downloads - Obtener todas las descargas */
 router.get('/', async function (req, res, next) {
@@ -72,35 +72,33 @@ router.get('/:id', async function (req, res, next) {
   }
 });
 
-/**
- * @swagger
- * /downloads:
- *   post:
- *     summary: Crea una nueva descarga.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               usuarioId:
- *                 type: string
- *               libro:
- *                 type: string
- *               formato:
- *                 type: string
- *                 default: PDF
- *     responses:
- *       201:
- *         description: Descarga creada exitosamente.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Download'
- *       500:
- *         description: Error en el servidor.
- */
+
+/*
+*   post:
+*     summary: Crea una nueva descarga.
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             properties:
+*               usuarioId:
+*                 type: string
+*               libro:
+*                 type: string
+*               formato:
+*                 type: string
+*                 default: PDF
+*     responses:
+*       201:
+*         description: Descarga creada exitosamente.
+*         content:
+*           application/json:
+*             schema:
+*               $ref: '#/components/schemas/Download'
+*       500:
+* /        description: Error en el servidor.
 
 /* POST /downloads - Crear una nueva descarga */
 router.post('/', async function (req, res, next) {
@@ -160,6 +158,42 @@ router.post('/', async function (req, res, next) {
  *         description: Error en el servidor.
  */
 
+/*
+ *   put:
+ *     summary: Actualiza una descarga por ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID de la descarga.
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               usuarioId:
+ *                 type: string
+ *               libro:
+ *                 type: string
+ *               formato:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Descarga actualizada exitosamente.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Download'
+ *       404:
+ *         description: Descarga no encontrada.
+ *       500:
+ *         description: Error en el servidor.
+ * /
+ * 
 /* PUT /downloads/:id - Actualizar una descarga */
 router.put('/:id', async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
@@ -184,6 +218,7 @@ router.put('/:id', async function (req, res, next) {
     res.sendStatus(500); // En caso de error, responde con un código 500
   }
 });
+
 
 /**
  * @swagger

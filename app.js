@@ -57,6 +57,7 @@ const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Iniciar el servidor
+
 const PORT = process.env.PORT || 2000;
 app.listen(PORT, () => {
   console.log(`🌟 Servidor corriendo en http://localhost:${PORT}`);
