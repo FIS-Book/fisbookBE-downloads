@@ -5,7 +5,7 @@ const debug = require('debug')('downloads-2:server');
 
 /**
  * @swagger
- * /downloads:
+ * /api-v1/downloads:
  *   get:
  *     summary: Obtiene todas las descargas.
  *     responses:
@@ -21,7 +21,7 @@ const debug = require('debug')('downloads-2:server');
  *         description: Error en el servidor.
  */
 
-/* GET /downloads - Obtener todas las descargas */
+/* GET /api-v1/downloads - Obtener todas las descargas */
 router.get('/', async function (req, res, next) {
   try {
     const result = await Download.find(); // Obtiene todas las descargas desde la base de datos
@@ -34,7 +34,7 @@ router.get('/', async function (req, res, next) {
 
 /**
  * @swagger
- * /downloads/{id}:
+ * /api-v1/downloads/{id}:
  *   get:
  *     summary: Obtiene una descarga por ID.
  *     parameters:
@@ -57,7 +57,7 @@ router.get('/', async function (req, res, next) {
  *         description: Error en el servidor.
  */
 
-/* GET /downloads/:id - Obtener una descarga por ID */
+/* GET /api-v1/downloads/:id - Obtener una descarga por ID */
 router.get('/:id', async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   try {
@@ -74,7 +74,7 @@ router.get('/:id', async function (req, res, next) {
 
 /**
  * @swagger
- * /downloads:
+ * /api-v1/downloads:
  *   post:
  *     summary: Crea una nueva descarga.
  *     requestBody:
@@ -85,9 +85,16 @@ router.get('/:id', async function (req, res, next) {
  *             type: object
  *             properties:
  *               usuarioId:
+ *                 type: number
+ *               isbn:
  *                 type: string
- *               libro:
+ *               titulo:
  *                 type: string
+ *               autor:
+ *                 type: string
+ *               idioma:
+ *                 type: string
+ *                 enum: ['en', 'es', 'fr', 'de', 'it', 'pt']
  *               formato:
  *                 type: string
  *                 default: PDF
@@ -102,13 +109,17 @@ router.get('/:id', async function (req, res, next) {
  *         description: Error en el servidor.
  */
 
-/* POST /downloads - Crear una nueva descarga */
+/* POST /api-v1/downloads - Crear una nueva descarga */
 router.post('/', async function (req, res, next) {
-  const { usuarioId, libro, formato } = req.body; // Obtener los datos del cuerpo de la solicitud
+  const { usuarioId, isbn, titulo, autor, idioma, formato } = req.body; // Obtener los datos del cuerpo de la solicitud
 
+  // Crear la nueva descarga
   const newDownload = new Download({
     usuarioId,
-    libro,
+    isbn,
+    titulo,
+    autor,
+    idioma,
     formato: formato || 'PDF', // Si no se proporciona formato, se asigna 'PDF' por defecto
     fecha: new Date().toISOString().split('T')[0], // Fecha actual en formato 'YYYY-MM-DD'
   });
@@ -124,7 +135,7 @@ router.post('/', async function (req, res, next) {
 
 /**
  * @swagger
- * /downloads/{id}:
+ * /api-v1/downloads/{id}:
  *   put:
  *     summary: Actualiza una descarga por ID.
  *     parameters:
@@ -142,9 +153,16 @@ router.post('/', async function (req, res, next) {
  *             type: object
  *             properties:
  *               usuarioId:
+ *                 type: number
+ *               isbn:
  *                 type: string
- *               libro:
+ *               titulo:
  *                 type: string
+ *               autor:
+ *                 type: string
+ *               idioma:
+ *                 type: string
+ *                 enum: ['en', 'es', 'fr', 'de', 'it', 'pt']
  *               formato:
  *                 type: string
  *     responses:
@@ -160,10 +178,10 @@ router.post('/', async function (req, res, next) {
  *         description: Error en el servidor.
  */
 
-/* PUT /downloads/:id - Actualizar una descarga */
+/* PUT /api-v1/downloads/:id - Actualizar una descarga */
 router.put('/:id', async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
-  const { usuarioId, libro, formato } = req.body; // Obtener los datos a actualizar
+  const { usuarioId, isbn, titulo, autor, idioma, formato } = req.body; // Obtener los datos a actualizar
 
   try {
     const download = await Download.findById(id); // Buscar la descarga por ID en la base de datos
@@ -174,7 +192,10 @@ router.put('/:id', async function (req, res, next) {
 
     // Actualizar los datos de la descarga
     download.usuarioId = usuarioId || download.usuarioId;
-    download.libro = libro || download.libro;
+    download.isbn = isbn || download.isbn;
+    download.titulo = titulo || download.titulo;
+    download.autor = autor || download.autor;
+    download.idioma = idioma || download.idioma;
     download.formato = formato || download.formato;
 
     await download.save(); // Guardar los cambios en la base de datos
@@ -187,7 +208,7 @@ router.put('/:id', async function (req, res, next) {
 
 /**
  * @swagger
- * /downloads/{id}:
+ * /api-v1/downloads/{id}:
  *   delete:
  *     summary: Elimina una descarga por ID.
  *     parameters:
@@ -206,7 +227,7 @@ router.put('/:id', async function (req, res, next) {
  *         description: Error en el servidor.
  */
 
-/* DELETE /downloads/:id - Eliminar una descarga */
+/* DELETE /api-v1/downloads/:id - Eliminar una descarga */
 router.delete('/:id', async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
 
@@ -223,5 +244,10 @@ router.delete('/:id', async function (req, res, next) {
     res.sendStatus(500); // En caso de error, responde con un código 500
   }
 });
+
+// -------------------- COMUNICACIÓN CON OTROS MICROSERVICIOS -----------------------------
+// Catálogo: Desde la página de detalles de un libro, que se pueda acceder a su lectura y descarga.
+
+// Lista de lecturas: Desde una lista de lectura, que puedas descargarte TODOS los libros de esa lista.
 
 module.exports = router;
