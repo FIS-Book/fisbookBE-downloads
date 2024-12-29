@@ -19,7 +19,7 @@ const debug = require('debug')('downloads-2:server');
  *                 $ref: '#/components/schemas/Download'
  *       500:
  *         description: Error en el servidor.
- */
+ * /
 
 /* GET /api-v1/downloads - Obtener todas las descargas */
 router.get('/', async function (req, res, next) {
@@ -205,6 +205,7 @@ router.put('/:id', async function (req, res, next) {
     res.sendStatus(500); // En caso de error, responde con un código 500
   }
 });
+
 
 /**
  * @swagger
