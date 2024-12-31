@@ -5,7 +5,8 @@ var logger = require('morgan');
 require('dotenv').config(); // Cargar variables de entorno
 
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/downloads');
+var downloadsRouter = require('./routes/downloads');
+var onlineReadingsRouter = require('./routes/onlinereadings');
 
 var app = express(); // Declaración única de 'app'
 
@@ -16,7 +17,8 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/api-v1/downloads', usersRouter);
+app.use('/api-v1/downloads', downloadsRouter);
+app.use('/api-v1/onlineReadings', onlineReadingsRouter);
 
 // Conexión a MongoDB
 const mongoose = require('mongoose');
@@ -43,7 +45,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:3000', // Cambia esto si tu servidor usa otra URL
+        url: 'http://localhost:2000', // Cambia esto si tu servidor usa otra URL
       },
     ],
   },
@@ -57,6 +59,7 @@ const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Iniciar el servidor
+
 const PORT = process.env.PORT || 2000;
 app.listen(PORT, () => {
   console.log(`🌟 Servidor corriendo en http://localhost:${PORT}`);
