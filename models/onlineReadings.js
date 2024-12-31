@@ -36,7 +36,7 @@ const onlineReadingsSchema = new mongoose.Schema({
   formato: {
     type: String,
     required: true, // Formato del libro leído
-    enum: ['PDF', 'EPUB'], // Opciones válidas
+    enum: ['PDF'], // Solo se permite PDF
     default: 'PDF' // Valor predeterminado: PDF
   }
 });
