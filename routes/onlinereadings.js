@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const OnlineReading = require('../models/onlineReadings.js');
 const debug = require('debug')('onlineReadings-2:server');
+const authenticateAndAuthorize = require('../authentication/authenticateAndAuthorize');
 
 /**
 * @swagger
@@ -20,7 +21,7 @@ const debug = require('debug')('onlineReadings-2:server');
 *       500:
 *         description: Error en el servidor.
 */
-router.get('/', async function (req, res, next) {
+router.get('/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   try {
     const result = await OnlineReading.find(); // Obtiene todas las lecturas en línea desde la base de datos
     res.json(result.map((c) => c.cleanup())); // Devuelve las lecturas con limpieza de atributos
@@ -54,7 +55,7 @@ router.get('/', async function (req, res, next) {
 *       500:
 *         description: Error en el servidor.
 */
-router.get('/:id', async function (req, res, next) {
+router.get('/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   try {
     const onlineReading = await OnlineReading.findById(id); // Buscar la lectura en línea por ID en la base de datos
@@ -107,31 +108,58 @@ router.get('/:id', async function (req, res, next) {
 *       500:
 *         description: Error en el servidor.
 */
-router.post('/', async function (req, res, next) {
-  const { usuarioId, isbn, titulo, autor, idioma, formato = 'PDF' } = req.body; // Obtener los datos del cuerpo de la solicitud
+router.post('/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+  const { usuarioId, titulo, autor, idioma, formato = 'PDF' } = req.body;
 
-  if (!usuarioId || !isbn || !titulo || !autor || !idioma) {
-    return res.status(400).json({ message: 'Faltan datos obligatorios' }); // Validación de campos obligatorios
+  // Validar datos obligatorios
+  if (!usuarioId || !titulo || !autor || !idioma) {
+    return res.status(400).json({ 
+      message: 'Faltan datos obligatorios: usuarioId, titulo, autor, idioma.'
+    });
+  }
+
+  // Validación del título
+  if (titulo.length < 3 || titulo.length > 121) {
+    return res.status(400).json({
+      message: 'El título debe tener entre 3 y 121 caracteres.'
+    });
+  }
+
+  // Validación de idioma
+  if (!['en', 'es', 'fr', 'de', 'it', 'pt'].includes(idioma)) {
+    return res.status(400).json({
+      message: 'El idioma debe ser uno de los siguientes: en, es, fr, de, it, pt.'
+    });
+  }
+
+  // Validación de formato
+  if (formato !== 'PDF') {
+    return res.status(400).json({
+      message: 'El formato solo puede ser PDF.'
+    });
   }
 
   const newOnlineReading = new OnlineReading({
     usuarioId,
-    isbn,
     titulo,
     autor,
     idioma,
     formato,
-    fecha: new Date().toISOString().split('T')[0], // Fecha actual en formato 'YYYY-MM-DD'
+    fecha: new Date().toISOString().split('T')[0], // Fecha actual
   });
 
   try {
-    await newOnlineReading.save(); // Guardar la nueva lectura en línea en la base de datos
-    res.status(201).json(newOnlineReading.cleanup()); // Devolver la lectura recién creada con limpieza de atributos
+    // Guardar la nueva lectura en la base de datos
+    await newOnlineReading.save();
+    res.status(201).json(newOnlineReading.cleanup()); // Responder con la lectura recién creada
   } catch (e) {
     debug('DB problem', e);
-    res.status(500).json({ message: 'Error en el servidor' }); // En caso de error, responde con un mensaje de error
+    res.status(500).json({
+      message: 'Error en el servidor al guardar la lectura en línea. Por favor, inténtelo más tarde.'
+    });
   }
 });
+
 
 /**
 * @swagger
@@ -175,34 +203,62 @@ router.post('/', async function (req, res, next) {
 *               $ref: '#/components/schemas/OnlineReading'
 *       404:
 *         description: Lectura no encontrada.
+*       400:
+*         description: Datos inválidos.
 *       500:
 *         description: Error en el servidor.
 */
-router.put('/:id', async function (req, res, next) {
+router.put('/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
-  const { usuarioId, isbn, titulo, autor, idioma, formato } = req.body; // Obtener los datos a actualizar
+  const { usuarioId, titulo, autor, idioma, formato } = req.body; // Obtener datos de la solicitud
 
   try {
-    const onlineReading = await OnlineReading.findById(id); // Buscar la lectura en línea por ID en la base de datos
+    // Buscar la lectura por ID
+    const onlineReading = await OnlineReading.findById(id);
     if (!onlineReading) {
-      return res.status(404).json({ message: 'Lectura en línea no encontrada' }); // Si no se encuentra, responde con un error 404
+      return res.status(404).json({
+        message: 'Lectura en línea no encontrada. Asegúrese de que el ID sea válido.'
+      });
     }
 
-    // Actualizar los datos de la lectura
+    // Validación del título
+    if (titulo && (titulo.length < 3 || titulo.length > 121)) {
+      return res.status(400).json({
+        message: 'El título debe tener entre 3 y 121 caracteres.'
+      });
+    }
+
+    // Validación de idioma
+    if (idioma && !['en', 'es', 'fr', 'de', 'it', 'pt'].includes(idioma)) {
+      return res.status(400).json({
+        message: 'El idioma debe ser uno de los siguientes: en, es, fr, de, it, pt.'
+      });
+    }
+
+    // Validación de formato
+    if (formato && formato !== 'PDF') {
+      return res.status(400).json({
+        message: 'El formato solo puede ser PDF.'
+      });
+    }
+
+    // Actualizar la lectura en línea
     onlineReading.usuarioId = usuarioId || onlineReading.usuarioId;
-    onlineReading.isbn = isbn || onlineReading.isbn;
     onlineReading.titulo = titulo || onlineReading.titulo;
     onlineReading.autor = autor || onlineReading.autor;
     onlineReading.idioma = idioma || onlineReading.idioma;
     onlineReading.formato = formato || onlineReading.formato;
 
-    await onlineReading.save(); // Guardar los cambios en la base de datos
-    res.json(onlineReading.cleanup()); // Devolver la lectura actualizada con limpieza de atributos
+    await onlineReading.save(); // Guardar cambios en la base de datos
+    res.status(200).json(onlineReading.cleanup()); // Responder con la lectura actualizada
   } catch (e) {
     debug('DB problem', e);
-    res.status(500).json({ message: 'Error en el servidor' }); // En caso de error, responde con un mensaje de error
+    res.status(500).json({
+      message: 'Error en el servidor al actualizar la lectura. Por favor, inténtelo más tarde.'
+    });
   }
 });
+
 
 /**
 * @swagger
@@ -224,7 +280,7 @@ router.put('/:id', async function (req, res, next) {
 *       500:
 *         description: Error en el servidor.
 */
-router.delete('/:id', async function (req, res, next) {
+router.delete('/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
 
   try {
