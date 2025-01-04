@@ -17,7 +17,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/api/v1/resources', downloadsRouter);
+app.use('/api/v1/read-and-download', downloadsRouter);
 
 // Conexión a MongoDB
 const mongoose = require('mongoose');
@@ -55,7 +55,7 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
 // Serve Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use('/api/v1/read-and-download', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Iniciar el servidor
 

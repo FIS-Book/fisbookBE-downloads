@@ -21,7 +21,7 @@ res.sendStatus(200);
 
 /**
  * @swagger
- * /api-v1/downloads:
+ * /api/v1/read-and-download/downloads:
  *   get:
  *     summary: Obtiene todas las descargas.
  *     responses:
@@ -50,7 +50,7 @@ router.get('/downloads/', async function (req, res, next) {
 
 /**
  * @swagger
- * /api-v1/downloads/{id}:
+ * /api/v1/read-and-download/downloads/{id}:
  *   get:
  *     summary: Obtiene una descarga por ID.
  *     parameters:
@@ -73,7 +73,6 @@ router.get('/downloads/', async function (req, res, next) {
  *         description: Error en el servidor.
  */
 
-/* GET /downloads/:id - Obtener una descarga por ID */
 router.get('/downloads/:id', async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   try {
@@ -114,9 +113,8 @@ router.get('/downloads/:id', async function (req, res, next) {
 *             schema:
 *               $ref: '#/components/schemas/Download'
 *       500:
-* /        description: Error en el servidor.
-
-/* POST /downloads - Crear una nueva descarga */
+*         description: Error en el servidor.
+*/
 router.post('/downloads/', async function (req, res, next) {
   const { usuarioId, libro, formato } = req.body; // Obtener los datos del cuerpo de la solicitud
 
@@ -157,136 +155,9 @@ router.post('/downloads/', async function (req, res, next) {
   }
 });
 
-
 /**
  * @swagger
- * /api-v1/downloads/{id}:
- *   put:
- *     summary: Actualiza una descarga por ID.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         description: ID de la descarga.
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               usuarioId:
- *                 type: number
- *               isbn:
- *                 type: string
- *               titulo:
- *                 type: string
- *               autor:
- *                 type: string
- *               idioma:
- *                 type: string
- *                 enum: ['en', 'es', 'fr', 'de', 'it', 'pt']
- *               formato:
- *                 type: string
- *     responses:
- *       200:
- *         description: Descarga actualizada exitosamente.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Download'
- *       404:
- *         description: Descarga no encontrada.
- *       500:
- *         description: Error en el servidor.
- */
-
-/*
- *   put:
- *     summary: Actualiza una descarga por ID.
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         description: ID de la descarga.
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               usuarioId:
- *                 type: string
- *               libro:
- *                 type: string
- *               formato:
- *                 type: string
- *     responses:
- *       200:
- *         description: Descarga actualizada exitosamente.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Download'
- *       404:
- *         description: Descarga no encontrada.
- *       500:
- *         description: Error en el servidor.
- * /
- * 
-/* PUT /downloads/:id - Actualizar una descarga */
-router.put('/downloads/:id', async function (req, res, next) {
-  const id = req.params.id; // Obtener el ID de la URL
-  const { usuarioId, isbn, titulo, autor, idioma, formato } = req.body; // Obtener los datos a actualizar
-
-  try {
-    const download = await Download.findById(id); // Buscar la descarga por ID en la base de datos
-
-    if (!download) {
-      return res.status(404).json({ message: 'Descarga no encontrada' }); // Si no se encuentra, responde con un error 404
-    }
-
-      // Validar los datos antes de guardar
-    if (!isbn.match(/^(?:\d{9}X|\d{10}|\d{13})$/)) {
-      return res.status(400).json({ message: 'Invalid ISBN format. Must be ISBN-10 or ISBN-13.' });
-    }
-
-    if (titulo.length < 3 || titulo.length > 121) {
-      return res.status(400).json({ message: 'The title must be at least 3 characters long and cannot be longer than 121 characters.' });
-    }
-
-    if (!['en', 'es', 'fr', 'de', 'it', 'pt'].includes(idioma)) {
-      return res.status(400).json({ message: 'The language must be one of the following: en, es, fr, de, it, pt.' });
-    }
-
-    if (!['PDF', 'EPUB'].includes(formato)) {
-      return res.status(400).json({ message: 'The format must be either PDF or EPUB.' });
-    }
-
-    // Actualizar los datos de la descarga
-    download.usuarioId = usuarioId || download.usuarioId;
-    download.isbn = isbn || download.isbn;
-    download.titulo = titulo || download.titulo;
-    download.autor = autor || download.autor;
-    download.idioma = idioma || download.idioma;
-    download.formato = formato || download.formato;
-
-    await download.save(); // Guardar los cambios en la base de datos
-    res.json(download.cleanup()); // Devolver la descarga actualizada con limpieza de atributos
-  } catch (e) {
-    debug('DB problem', e);
-    res.sendStatus(500); // En caso de error, responde con un código 500
-  }
-});
-
-/**
- * @swagger
- * /api-v1/downloads/{id}:
+ * /api/v1/read-and-download/downloads/{id}:
  *   delete:
  *     summary: Elimina una descarga por ID.
  *     parameters:
@@ -305,7 +176,6 @@ router.put('/downloads/:id', async function (req, res, next) {
  *         description: Error en el servidor.
  */
 
-/* DELETE /downloads/:id - Eliminar una descarga */
 router.delete('/downloads/:id', async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
 
@@ -327,7 +197,7 @@ router.delete('/downloads/:id', async function (req, res, next) {
 
 /**
  * @swagger
- * /api-v1/downloads/count:
+ * /api/v1/read-and-download/downloads/count/:isbn:
  *   get:
  *     summary: Cuenta las descargas de un libro.
  *     description: Devuelve el número de veces que un libro con un ISBN específico ha sido descargado.
@@ -358,7 +228,7 @@ router.delete('/downloads/:id', async function (req, res, next) {
  *         description: Error inesperado del servidor.
  */
 
-router.get('/:isbn/downloads', async (req, res) => {
+router.get('downloads/count/:isbn', async (req, res) => {
   const { isbn } = req.query;
 
   // Validar que el ISBN esté presente y tenga el formato correcto
@@ -386,7 +256,7 @@ router.get('/:isbn/downloads', async (req, res) => {
 
 /**
  * @swagger
- * /api-v1/downloads/user/count:
+ * /api/v1/read-and-download/downloads/user/count:
  *   get:
  *     summary: Cuenta el número de descargas realizadas por un usuario.
  *     description: Devuelve el número de descargas realizadas por un usuario dado su `usuarioId`.
@@ -445,7 +315,7 @@ router.get('/downloads/user/count', async (req, res) => {
 
 /**
  * @swagger
- * /api-v1/downloads/download-all:
+ * /api/v1/read-and-download/downloads/download-readinglist:
  *   get:
  *     summary: Descarga todos los libros de una lista de lectura de un usuario.
  *     description: Permite descargar todos los libros asociados a un usuario.

@@ -6,7 +6,7 @@ const authenticateAndAuthorize = require('../authentication/authenticateAndAutho
 
 /**
 * @swagger
-* /api-v1/onlineReadings:
+* /api/v1/read-and-download/onlineReadings:
 *   get:
 *     summary: Obtiene todas las lecturas en línea.
 *     responses:
@@ -21,7 +21,7 @@ const authenticateAndAuthorize = require('../authentication/authenticateAndAutho
 *       500:
 *         description: Error en el servidor.
 */
-router.get('/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.get('/onlineReadings/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   try {
     const result = await OnlineReading.find(); // Obtiene todas las lecturas en línea desde la base de datos
     res.json(result.map((c) => c.cleanup())); // Devuelve las lecturas con limpieza de atributos
@@ -33,7 +33,7 @@ router.get('/', authenticateAndAuthorize(['User', 'Admin']), async function (req
 
 /**
 * @swagger
-* /api-v1/onlineReadings/{id}:
+* /api/v1/read-and-download/onlineReadings/{id}:
 *   get:
 *     summary: Obtiene una lectura en línea por ID.
 *     parameters:
@@ -55,7 +55,7 @@ router.get('/', authenticateAndAuthorize(['User', 'Admin']), async function (req
 *       500:
 *         description: Error en el servidor.
 */
-router.get('/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.get('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   try {
     const onlineReading = await OnlineReading.findById(id); // Buscar la lectura en línea por ID en la base de datos
@@ -71,7 +71,7 @@ router.get('/:id', authenticateAndAuthorize(['User', 'Admin']), async function (
 
 /**
 * @swagger
-* /api-v1/onlineReadings:
+* /api/v1/read-and-download/onlineReadings:
 *   post:
 *     summary: Crea una nueva lectura en línea.
 *     requestBody:
@@ -108,7 +108,7 @@ router.get('/:id', authenticateAndAuthorize(['User', 'Admin']), async function (
 *       500:
 *         description: Error en el servidor.
 */
-router.post('/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.post('/onlineReadings/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const { usuarioId, titulo, autor, idioma, formato = 'PDF' } = req.body;
 
   // Validar datos obligatorios
@@ -163,7 +163,7 @@ router.post('/', authenticateAndAuthorize(['User', 'Admin']), async function (re
 
 /**
 * @swagger
-* /api-v1/onlineReadings/{id}:
+* /api/v1/read-and-download/onlineReadings/{id}:
 *   put:
 *     summary: Actualiza una lectura en línea por ID.
 *     parameters:
@@ -208,7 +208,7 @@ router.post('/', authenticateAndAuthorize(['User', 'Admin']), async function (re
 *       500:
 *         description: Error en el servidor.
 */
-router.put('/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.put('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   const { usuarioId, titulo, autor, idioma, formato } = req.body; // Obtener datos de la solicitud
 
@@ -262,7 +262,7 @@ router.put('/:id', authenticateAndAuthorize(['User', 'Admin']), async function (
 
 /**
 * @swagger
-* /api-v1/onlineReadings/{id}:
+* /api/v1/read-and-download/onlineReadings/{id}:
 *   delete:
 *     summary: Elimina una lectura en línea por ID.
 *     parameters:
@@ -280,7 +280,7 @@ router.put('/:id', authenticateAndAuthorize(['User', 'Admin']), async function (
 *       500:
 *         description: Error en el servidor.
 */
-router.delete('/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.delete('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
 
   try {
