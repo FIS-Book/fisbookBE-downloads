@@ -16,7 +16,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
-app.use('/api-v1/downloads', downloadsRouter);
+app.use('/api/v1/resources', downloadsRouter);
 
 // Conexión a MongoDB
 const mongoose = require('mongoose');

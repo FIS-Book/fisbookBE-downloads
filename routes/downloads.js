@@ -22,7 +22,7 @@ const debug = require('debug')('downloads-2:server');
  * /
 
 /* GET /downloads - Obtener todas las descargas */
-router.get('/', async function (req, res, next) {
+router.get('/downloads/', async function (req, res, next) {
   try {
     const result = await Download.find(); // Obtiene todas las descargas desde la base de datos
     res.json(result.map((c) => c.cleanup())); // Devuelve las descargas con limpieza de atributos
@@ -58,7 +58,7 @@ router.get('/', async function (req, res, next) {
  */
 
 /* GET /downloads/:id - Obtener una descarga por ID */
-router.get('/:id', async function (req, res, next) {
+router.get('/downloads/:id', async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   try {
     const download = await Download.findById(id); // Buscar la descarga por ID en la base de datos
@@ -101,7 +101,7 @@ router.get('/:id', async function (req, res, next) {
 * /        description: Error en el servidor.
 
 /* POST /downloads - Crear una nueva descarga */
-router.post('/', async function (req, res, next) {
+router.post('/downloads/', async function (req, res, next) {
   const { usuarioId, libro, formato } = req.body; // Obtener los datos del cuerpo de la solicitud
 
   const newDownload = new Download({
@@ -195,7 +195,7 @@ router.post('/', async function (req, res, next) {
  * /
  * 
 /* PUT /downloads/:id - Actualizar una descarga */
-router.put('/:id', async function (req, res, next) {
+router.put('/downloads/:id', async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   const { usuarioId, libro, formato } = req.body; // Obtener los datos a actualizar
 
@@ -242,7 +242,7 @@ router.put('/:id', async function (req, res, next) {
  */
 
 /* DELETE /downloads/:id - Eliminar una descarga */
-router.delete('/:id', async function (req, res, next) {
+router.delete('/downloads/:id', async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
 
   try {
