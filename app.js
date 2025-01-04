@@ -21,7 +21,7 @@ app.use('/api/v1/read-and-download', downloadsRouter);
 
 // Conexión a MongoDB
 const mongoose = require('mongoose');
-const uri = process.env.MONGO_URI;
+const uri = process.env.MONGO_URI_DOWNLOADS;
 
 mongoose.connect(uri, {
     useNewUrlParser: true,
