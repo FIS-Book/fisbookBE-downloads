@@ -38,7 +38,7 @@ res.sendStatus(200);
  */
 
 /* GET /downloads - Obtener todas las descargas */
-router.get('/downloads/', async function (req, res, next) {
+router.get('/downloads/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   try {
     const result = await Download.find(); // Obtiene todas las descargas desde la base de datos
     res.json(result.map((c) => c.cleanup())); // Devuelve las descargas con limpieza de atributos
@@ -73,7 +73,7 @@ router.get('/downloads/', async function (req, res, next) {
  *         description: Error en el servidor.
  */
 
-router.get('/downloads/:id', async function (req, res, next) {
+router.get('/downloads/:id',authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   try {
     const download = await Download.findById(id); // Buscar la descarga por ID en la base de datos
@@ -115,7 +115,7 @@ router.get('/downloads/:id', async function (req, res, next) {
 *       500:
 *         description: Error en el servidor.
 */
-router.post('/downloads/', async function (req, res, next) {
+router.post('/downloads/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const { usuarioId, libro, formato } = req.body; // Obtener los datos del cuerpo de la solicitud
 
   // Validar los datos antes de guardar
@@ -176,7 +176,7 @@ router.post('/downloads/', async function (req, res, next) {
  *         description: Error en el servidor.
  */
 
-router.delete('/downloads/:id', async function (req, res, next) {
+router.delete('/downloads/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
 
   try {
@@ -228,7 +228,7 @@ router.delete('/downloads/:id', async function (req, res, next) {
  *         description: Error inesperado del servidor.
  */
 
-router.get('downloads/count/:isbn', async (req, res) => {
+router.get('downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
   const { isbn } = req.query;
 
   // Validar que el ISBN esté presente y tenga el formato correcto
@@ -287,7 +287,7 @@ router.get('downloads/count/:isbn', async (req, res) => {
  *         description: Error inesperado del servidor.
  */
 
-router.get('/downloads/user/count', async (req, res) => {
+router.get('/downloads/user/count', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
   const { usuarioId } = req.query;
 
   // Validar que el usuarioId esté presente y sea un número
@@ -358,7 +358,7 @@ router.get('/downloads/user/count', async (req, res) => {
  *         description: Error inesperado del servidor.
  */
 
-router.get('/downloads/download-readinglist', async (req, res) => {
+router.get('/downloads/download-readinglist', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
   const { userId } = req.query;
 
   // Validar que el userId está presente
