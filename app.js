@@ -18,6 +18,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/api/v1/read-and-download', downloadsRouter);
+app.use('/api/v1/read-and-download', onlineReadingsRouter);
 
 // Conexión a MongoDB
 const mongoose = require('mongoose');
