@@ -16,12 +16,21 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+const cors = require('cors');
+const corsOptions = {
+  origin: ['http://localhost:3000', 'http://localhost:3001'], // Permitir solicitudes desde este dominio
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos permitidos
+  allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
+};
+app.use(cors(corsOptions));
+
 app.use('/', indexRouter);
 app.use('/api/v1/read-and-download', downloadsRouter);
+app.use('/api/v1/read-and-download', onlineReadingsRouter);
 
 // Conexión a MongoDB
 const mongoose = require('mongoose');
-const uri = process.env.MONGO_URI;
+const uri = process.env.MONGO_URI_DOWNLOADS;
 
 mongoose.connect(uri, {
     useNewUrlParser: true,
@@ -55,7 +64,7 @@ const swaggerOptions = {
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
 // Serve Swagger UI
-app.use('/api/v1/read-and-download', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use('/api/v1/read-and-download/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Iniciar el servidor
 

@@ -46,7 +46,7 @@ downloadsSchema.methods.cleanup = function () {
   return {
     id: this._id,
     usuarioId: this.usuarioId,
-    isbn: this.isbn4,
+    isbn: this.isbn,
     titulo: this.titulo,
     autor: this.autor,
     idioma: this.idioma,
