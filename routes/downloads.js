@@ -6,7 +6,7 @@ const authenticateAndAuthorize = require('../authentication/authenticateAndAutho
 const axios = require('axios');
 
 // Microservicio de Lista de Lecturas
-const MS_READING_URL = process.env.MS_READING_URL; // URL del microservicio de listas de lectura
+const MS_READING_LIST_URL = process.env.MS_READING_LIST_URL;
 
 // HEALTH CHECK
 router.get('/healthz', (req, res) => {
@@ -38,7 +38,7 @@ res.sendStatus(200);
  */
 
 /* GET /downloads - Obtener todas las descargas */
-router.get('/downloads/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.get('/downloads/', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
   try {
     const result = await Download.find(); // Obtiene todas las descargas desde la base de datos
     res.json(result.map((c) => c.cleanup())); // Devuelve las descargas con limpieza de atributos
@@ -73,7 +73,7 @@ router.get('/downloads/', authenticateAndAuthorize(['User', 'Admin']), async fun
  *         description: Error en el servidor.
  */
 
-router.get('/downloads/:id',authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.get('/downloads/:id',authenticateAndAuthorize(['Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   try {
     const download = await Download.findById(id); // Buscar la descarga por ID en la base de datos
@@ -88,7 +88,9 @@ router.get('/downloads/:id',authenticateAndAuthorize(['User', 'Admin']), async f
 });
 
 
-/*
+/** 
+* @swagger
+* /api/v1/read-and-download/downloads:
 *   post:
 *     summary: Crea una nueva descarga.
 *     requestBody:
@@ -176,7 +178,7 @@ router.post('/downloads/', authenticateAndAuthorize(['User', 'Admin']), async fu
  *         description: Error en el servidor.
  */
 
-router.delete('/downloads/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.delete('/downloads/:id', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
 
   try {
@@ -368,7 +370,7 @@ router.get('/downloads/download-readinglist', authenticateAndAuthorize(['User', 
 
   try {
     // Hacer una solicitud al microservicio de lectura para obtener todos los libros del usuario
-    const response = await axios.get(`${MS_READING_URL}/api/v1/readings`, {
+    const response = await axios.get(`${MS_READING_LIST_URL}/api/v1/readings`, {
       params: { userId: userId }
     });
 

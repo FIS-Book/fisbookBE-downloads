@@ -12,7 +12,6 @@ COPY models/ ./models
 COPY public/ ./public
 COPY routes/ ./routes
 COPY app.js .
-COPY .env .
      
 EXPOSE 2000
 

@@ -18,7 +18,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const cors = require('cors');
 const corsOptions = {
-  origin: ['http://localhost:3000', 'http://localhost:3001'], // Permitir solicitudes desde este dominio
+  origin: [`${process.env.BASE_URL}`,'http://localhost:3000'], // Permitir solicitudes desde este dominio
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos permitidos
   allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
 };

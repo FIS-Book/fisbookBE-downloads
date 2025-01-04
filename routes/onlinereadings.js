@@ -21,7 +21,7 @@ const authenticateAndAuthorize = require('../authentication/authenticateAndAutho
 *       500:
 *         description: Error en el servidor.
 */
-router.get('/onlineReadings/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.get('/onlineReadings/', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
   try {
     const result = await OnlineReading.find(); // Obtiene todas las lecturas en línea desde la base de datos
     res.json(result.map((c) => c.cleanup())); // Devuelve las lecturas con limpieza de atributos
@@ -55,7 +55,7 @@ router.get('/onlineReadings/', authenticateAndAuthorize(['User', 'Admin']), asyn
 *       500:
 *         description: Error en el servidor.
 */
-router.get('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.get('/onlineReadings/:id', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   try {
     const onlineReading = await OnlineReading.findById(id); // Buscar la lectura en línea por ID en la base de datos
@@ -208,7 +208,7 @@ router.post('/onlineReadings/', authenticateAndAuthorize(['User', 'Admin']), asy
 *       500:
 *         description: Error en el servidor.
 */
-router.put('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.put('/onlineReadings/:id', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   const { usuarioId, titulo, autor, idioma, formato } = req.body; // Obtener datos de la solicitud
 
@@ -280,7 +280,7 @@ router.put('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), a
 *       500:
 *         description: Error en el servidor.
 */
-router.delete('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.delete('/onlineReadings/:id', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
 
   try {
