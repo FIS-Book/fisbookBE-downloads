@@ -6,6 +6,7 @@ require('dotenv').config(); // Cargar variables de entorno
 
 var indexRouter = require('./routes/index');
 var downloadsRouter = require('./routes/downloads');
+var onlineReadingsRouter = require('./routes/onlinereadings');
 
 var app = express(); // Declaración única de 'app'
 
@@ -43,7 +44,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: 'http://localhost:3000', // Cambia esto si tu servidor usa otra URL
+        url: 'http://localhost:2000', // Cambia esto si tu servidor usa otra URL
       },
     ],
   },
