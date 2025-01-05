@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 // Esquema para las descargas
 const downloadsSchema = new mongoose.Schema({
   usuarioId: {
-    type: Number,
-    required: true // ID del usuario asociado a la descarga
+    type: String, 
+    required: true,
   },
   isbn: {
     type: String,

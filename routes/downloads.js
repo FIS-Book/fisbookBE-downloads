@@ -118,7 +118,7 @@ router.get('/downloads/:id',authenticateAndAuthorize(['Admin']), async function 
 *         description: Error en el servidor.
 */
 router.post('/downloads/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
-  const { usuarioId, libro, formato } = req.body; // Obtener los datos del cuerpo de la solicitud
+  const { usuarioId, formato, isbn, titulo, autor, idioma } = req.body; 
 
   // Validar los datos antes de guardar
   if (!isbn.match(/^(?:\d{9}X|\d{10}|\d{13})$/)) {
@@ -230,8 +230,8 @@ router.delete('/downloads/:id', authenticateAndAuthorize(['Admin']), async funct
  *         description: Error inesperado del servidor.
  */
 
-router.get('downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
-  const { isbn } = req.query;
+router.get('/downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
+  const { isbn } = req.params; // Cambiado a req.params
 
   // Validar que el ISBN esté presente y tenga el formato correcto
   if (!isbn || !/^(?:\d{9}X|\d{10}|\d{13})$/.test(isbn)) {
@@ -268,8 +268,8 @@ router.get('downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin']),
  *         required: true
  *         description: El ID del usuario cuyo número de descargas se desea conocer.
  *         schema:
- *           type: number
- *           example: 1234567890
+ *           type: string
+ *           example: 677918707b978a621e439cd7
  *     responses:
  *       200:
  *         description: El número de descargas realizadas por el usuario.
@@ -288,12 +288,12 @@ router.get('downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin']),
  *       500:
  *         description: Error inesperado del servidor.
  */
-
+// La url debe ser así: /api/v1/read-and-download/downloads/user/count?usuarioId=677918707b978a621e439cd7
 router.get('/downloads/user/count', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
   const { usuarioId } = req.query;
 
-  // Validar que el usuarioId esté presente y sea un número
-  if (!usuarioId || typeof usuarioId !== 'number') {
+  // Validar que el usuarioId esté presente y sea un string no vacío
+  if (!usuarioId || typeof usuarioId !== 'string' || usuarioId.trim() === '') {
     return res.status(400).json({ message: 'El ID de usuario es inválido o falta en la solicitud.' });
   }
 
