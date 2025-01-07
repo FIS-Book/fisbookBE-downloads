@@ -112,46 +112,58 @@ router.get('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), a
 *       500:
 *         description: Error en el servidor.
 */
-router.post('/onlinereadings', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
-  const { usuarioId, isbn, titulo, autor, idioma, formato } = req.body;
-
-  // Validar los datos antes de guardar
-  if (!isbn.match(/^(?:\d{9}X|\d{10}|\d{13})$/)) {
-    return res.status(400).json({ message: 'Invalid ISBN format. Must be ISBN-10 or ISBN-13.' });
+router.post('/onlineReadings/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+  const { usuarioId, titulo, autor, idioma, formato = 'PDF' } = req.body;
+ 
+  // Validar datos obligatorios
+  if (!usuarioId || !titulo || !autor || !idioma) {
+    return res.status(400).json({
+      message: 'Faltan datos obligatorios: usuarioId, titulo, autor, idioma.'
+    });
   }
-
+ 
+  // Validación del título
   if (titulo.length < 3 || titulo.length > 121) {
-    return res.status(400).json({ message: 'The title must be at least 3 characters long and cannot be longer than 121 characters.' });
+    return res.status(400).json({
+      message: 'El título debe tener entre 3 y 121 caracteres.'
+    });
   }
-
+ 
+  // Validación de idioma
   if (!['en', 'es', 'fr', 'de', 'it', 'pt'].includes(idioma)) {
-    return res.status(400).json({ message: 'The language must be one of the following: en, es, fr, de, it, pt.' });
+    return res.status(400).json({
+      message: 'El idioma debe ser uno de los siguientes: en, es, fr, de, it, pt.'
+    });
   }
-
-  if (formato && formato !== 'PDF') {
-    return res.status(400).json({ message: 'The format must be PDF.' });
+ 
+  // Validación de formato
+  if (formato !== 'PDF') {
+    return res.status(400).json({
+      message: 'El formato solo puede ser PDF.'
+    });
   }
-
-  // Crear la nueva lectura en línea
+ 
   const newOnlineReading = new OnlineReading({
     usuarioId,
-    isbn,
     titulo,
     autor,
     idioma,
-    formato: formato || 'PDF', // Si no se proporciona formato, se asigna 'PDF' por defecto
-    fecha: new Date().toISOString().split('T')[0], // Fecha actual en formato 'YYYY-MM-DD'
+    formato,
+    fecha: new Date().toISOString().split('T')[0], // Fecha actual
   });
-
+ 
   try {
-    await newOnlineReading.save(); // Guardar la nueva lectura en línea en la base de datos
-    res.status(201).json(newOnlineReading.cleanup()); // Respuesta exitosa con código 201
+    // Guardar la nueva lectura en la base de datos
+    await newOnlineReading.save();
+    res.status(201).json(newOnlineReading.cleanup()); // Responder con la lectura recién creada
   } catch (e) {
-    console.error('DB problem', e);
-    res.sendStatus(500); // En caso de error, responde con un código 500
+    debug('DB problem', e);
+    res.status(500).json({
+      message: 'Error en el servidor al guardar la lectura en línea. Por favor, inténtelo más tarde.'
+    });
   }
 });
-
+ 
 /**
 * @swagger
 * /api/v1/read-and-download/onlineReadings/{id}:

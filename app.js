@@ -3,8 +3,8 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 require('dotenv').config(); // Cargar variables de entorno
+const db = require('./db.js');
 
-var indexRouter = require('./routes/index');
 var downloadsRouter = require('./routes/downloads');
 var onlineReadingsRouter = require('./routes/onlinereadings');
 
@@ -24,20 +24,8 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 
-app.use('/', indexRouter);
 app.use('/api/v1/read-and-download', downloadsRouter);
 app.use('/api/v1/read-and-download', onlineReadingsRouter);
-
-// Conexión a MongoDB
-const mongoose = require('mongoose');
-const uri = process.env.MONGO_URI_DOWNLOADS;
-
-mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => console.log('✅ Conexión exitosa a MongoDB Atlas'))
-.catch(err => console.error('❌ Error al conectar a MongoDB Atlas:', err));
 
 // Configuración de Swagger
 const swaggerUi = require('swagger-ui-express');

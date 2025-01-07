@@ -39,13 +39,16 @@ res.sendStatus(200);
  */
 
 /* GET /downloads - Obtener todas las descargas */
-router.get('/downloads/', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
+router.get('/downloads', authenticateAndAuthorize(['Admin']), async function(req, res, next) {
   try {
-    const result = await Download.find(); // Obtiene todas las descargas desde la base de datos
-    res.json(result.map((c) => c.cleanup())); // Devuelve las descargas con limpieza de atributos
-  } catch (e) {
-    debug('DB problem', e);
-    res.sendStatus(500); // En caso de error, responde con un código 500
+    // Obtener todas las descargas desde la base de datos
+    const downloads = await Download.find();
+ 
+    // Retornar la respuesta con las descargas
+    res.status(200).json({ downloads });
+  } catch (error) {
+    // En caso de error, retornamos un mensaje de error
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 });
 
@@ -74,20 +77,21 @@ router.get('/downloads/', authenticateAndAuthorize(['Admin']), async function (r
  *         description: Error en el servidor.
  */
 
-router.get('/downloads/:id',authenticateAndAuthorize(['Admin']), async function (req, res, next) {
-  const id = req.params.id; // Obtener el ID de la URL
+router.get('/downloads/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+  const id = req.params.id;
   try {
-    const download = await Download.findById(id); // Buscar la descarga por ID en la base de datos
+    const download = await Download.findById(id);
     if (!download) {
-      return res.status(404).json({ message: 'Descarga no encontrada' }); // Si no se encuentra, responde con un error 404
+      return res.status(404).json({ message: 'Descarga no encontrada' });
     }
-    res.json(download.cleanup()); // Devuelve la descarga con limpieza de atributos
+ 
+    const response = download.cleanup ? download.cleanup() : download;
+    res.json(response);
   } catch (e) {
     debug('DB problem', e);
-    res.sendStatus(500); // En caso de error, responde con un código 500
+    res.status(500).json({ error: 'Unexpected server error' });
   }
 });
-
 
 /** 
 * @swagger
@@ -118,43 +122,56 @@ router.get('/downloads/:id',authenticateAndAuthorize(['Admin']), async function 
 *       500:
 *         description: Error en el servidor.
 */
-router.post('/downloads/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
-  const { usuarioId, formato, isbn, titulo, autor, idioma } = req.body; 
-
-  // Validar los datos antes de guardar
-  if (!isbn.match(/^(?:\d{9}X|\d{10}|\d{13})$/)) {
-    return res.status(400).json({ message: 'Invalid ISBN format. Must be ISBN-10 or ISBN-13.' });
+router.post('/downloads', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+  const { usuarioId, isbn, titulo, autor, idioma, formato = 'PDF' } = req.body;
+ 
+  // Validar datos obligatorios
+  if (!usuarioId || !isbn || !titulo || !autor || !idioma) {
+    return res.status(400).json({
+      message: 'Faltan datos obligatorios'
+    });
   }
-
+ 
+  // Validación del título
   if (titulo.length < 3 || titulo.length > 121) {
-    return res.status(400).json({ message: 'The title must be at least 3 characters long and cannot be longer than 121 characters.' });
+    return res.status(400).json({
+      message: 'El título debe tener entre 3 y 121 caracteres.'
+    });
   }
-
+ 
+  // Validación de idioma
   if (!['en', 'es', 'fr', 'de', 'it', 'pt'].includes(idioma)) {
-    return res.status(400).json({ message: 'The language must be one of the following: en, es, fr, de, it, pt.' });
+    return res.status(400).json({
+      message: 'El idioma debe ser uno de los siguientes: en, es, fr, de, it, pt.'
+    });
   }
-
-  if (!['PDF', 'EPUB'].includes(formato)) {
-    return res.status(400).json({ message: 'The format must be either PDF or EPUB.' });
+ 
+  // Validación de formato
+  if (formato !== 'PDF') {
+    return res.status(400).json({
+      message: 'El formato solo puede ser PDF.'
+    });
   }
-
-  // Crear la nueva descarga
+ 
   const newDownload = new Download({
     usuarioId,
     isbn,
     titulo,
     autor,
     idioma,
-    formato: formato || 'PDF', // Si no se proporciona formato, se asigna 'PDF' por defecto
-    fecha: new Date().toISOString().split('T')[0], // Fecha actual en formato 'YYYY-MM-DD'
+    formato,
+    fecha: new Date().toISOString().split('T')[0], // Fecha actual
   });
-
+ 
   try {
-    await newDownload.save(); // Guardar la nueva descarga en la base de datos
-    res.status(201).json(newDownload.cleanup()); // Respuesta exitosa con código 201
+    // Guardar la nueva descarga en la base de datos
+    await newDownload.save();
+    res.status(201).json(newDownload);  // Responder con la descarga recién creada
   } catch (e) {
-    console.error('DB problem', e);
-    res.sendStatus(500); // En caso de error, responde con un código 500
+    console.error('Error al guardar la descarga:', e);
+    res.status(500).json({
+      message: 'Error en el servidor al guardar la descarga. Por favor, inténtelo más tarde.'
+    });
   }
 });
 
