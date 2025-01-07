@@ -7,6 +7,7 @@ const axios = require('axios');
 
 // Microservicio de Lista de Lecturas
 const MS_READING_LIST_URL = process.env.MS_READING_LIST_URL;
+const BASE_URL = process.env.BASE_URL;
 
 // HEALTH CHECK
 router.get('/healthz', (req, res) => {
@@ -157,6 +158,7 @@ router.post('/downloads/', authenticateAndAuthorize(['User', 'Admin']), async fu
   }
 });
 
+
 /**
  * @swagger
  * /api/v1/read-and-download/downloads/{id}:
@@ -231,15 +233,23 @@ router.delete('/downloads/:id', authenticateAndAuthorize(['Admin']), async funct
  */
 
 router.get('/downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
-  const { isbn } = req.params; // Cambiado a req.params
+  const { isbn } = req.params;
 
   // Validar que el ISBN esté presente y tenga el formato correcto
   if (!isbn || !/^(?:\d{9}X|\d{10}|\d{13})$/.test(isbn)) {
     return res.status(400).json({ message: 'El ISBN es inválido o falta en la solicitud.' });
   }
 
+  // Obtener el token desde el encabezado de autorización
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1]; // Se asume que el token viene en el formato "Bearer <token>"
+
+  // Validar que el token esté presente
+  if (!token) {
+    return res.status(401).json({ message: 'Token de autorización no proporcionado.' });
+  }
+
   try {
-    // Buscar las descargas del libro por ISBN
+    // Buscar las descargas del libro por ISBN en la base de datos
     const downloadCount = await Download.countDocuments({ isbn });
 
     // Si no se encontraron descargas
@@ -247,11 +257,28 @@ router.get('/downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin'])
       return res.status(404).json({ message: 'No se encontraron descargas para este libro.' });
     }
 
+    // Asegúrate de que downloadCount sea un número entero
+    const downloadCountInt = parseInt(downloadCount, 10);
+    
+    if (isNaN(downloadCountInt)) {
+      return res.status(400).json({ message: 'El número de descargas es inválido.' });
+    }
+
+    // Paso 2: Actualizar el número de descargas en el microservicio del catálogo
+    await axios.patch(`${BASE_URL}/api/v1/books/${isbn}/downloads`, {
+      downloadCount: downloadCountInt // Enviar el número de descargas como un entero
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}` // Asegúrate de enviar el token de autorización correctamente
+      }
+    });
+
     // Responder con el número de descargas
-    return res.status(200).json({ count: downloadCount });
+    return res.status(200).json({ count: downloadCountInt });
+
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Error inesperado en el servidor.', error: error.message });
+    return res.status(500).json({ message: 'Error inesperado en el servidor.', error: error.response ? error.response.data : error.message });
   }
 });
 
@@ -289,31 +316,41 @@ router.get('/downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin'])
  *         description: Error inesperado del servidor.
  */
 // La url debe ser así: /api/v1/read-and-download/downloads/user/count?usuarioId=677918707b978a621e439cd7
-router.get('/downloads/user/count', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
-  const { usuarioId } = req.query;
 
-  // Validar que el usuarioId esté presente y sea un string no vacío
-  if (!usuarioId || typeof usuarioId !== 'string' || usuarioId.trim() === '') {
-    return res.status(400).json({ message: 'El ID de usuario es inválido o falta en la solicitud.' });
+router.get('/downloads/user/count', async (req, res) => {
+  const { usuarioId } = req.query;
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];  // Se asume que el token es enviado en el formato "Bearer <token>"
+
+  if (!usuarioId || !token) {
+    return res.status(400).json({ message: 'Faltan parámetros: usuarioId o token.' });
   }
 
   try {
-    // Buscar las descargas del usuario por usuarioId
-    const downloadCount = await Download.countDocuments({ usuarioId });
 
-    // Si no se encontraron descargas
+    // Paso 1: Contar las descargas del usuario
+    const downloadCount = await Download.countDocuments({ usuarioId });
+    console.log(`Número de descargas: ${downloadCount}`);
+
     if (downloadCount === 0) {
       return res.status(404).json({ message: 'No se encontraron descargas para este usuario.' });
     }
 
-    // Responder con el número de descargas
-    return res.status(200).json({ count: downloadCount });
+    // Paso 2: Actualizar el número de descargas en el microservicio de usuarios
+    await axios.patch(`${BASE_URL}/api/v1/auth/users/${usuarioId}/downloads`, {
+      numDescargas: downloadCount  // Enviar el número de descargas como un entero
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`  // Enviar el token de autorización
+      }
+    });
+
+    return res.status(200).json({ message: `Número de descargas actualizado para ${username}: ${downloadCount}` });
+
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Error inesperado en el servidor.', error: error.message });
+    return res.status(500).json({ message: `Error al contar descargas o actualizar el usuario: ${error.message}` });
   }
 });
-
 
 /**
  * @swagger
