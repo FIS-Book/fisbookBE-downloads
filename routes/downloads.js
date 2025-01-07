@@ -128,7 +128,7 @@ router.get('/downloads/:id', authenticateAndAuthorize(['User', 'Admin']), async 
  *         description: Error inesperado al guardar la descarga. Inténtelo más tarde.
  */
 router.post('/downloads', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
-  const { usuarioId, isbn, titulo, autor, idioma, formato = 'PDF' } = req.body;
+  const { usuarioId, isbn, titulo, autor, idioma, formato} = req.body;
  
   if (!usuarioId || !isbn || !titulo || !autor || !idioma) {
     return res.status(400).json({
