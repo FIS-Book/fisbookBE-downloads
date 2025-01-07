@@ -98,11 +98,11 @@ router.get('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), a
 *         description: Error en el servidor.
 */
 router.post('/onlineReadings/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
-  const { usuarioId, titulo, autor, idioma, formato = 'PDF' } = req.body;
+  const { usuarioId, titulo, autor, idioma, formato = 'PDF', isbn } = req.body;
  
-  if (!usuarioId || !titulo || !autor || !idioma) {
+  if (!usuarioId || !titulo || !autor || !idioma || !isbn) {
     return res.status(400).json({
-      message: 'Faltan datos obligatorios: usuarioId, titulo, autor, idioma.'
+      message: 'Faltan datos obligatorios: usuarioId, titulo, autor, idioma, isbn.'
     });
   }
  
@@ -130,12 +130,13 @@ router.post('/onlineReadings/', authenticateAndAuthorize(['User', 'Admin']), asy
     autor,
     idioma,
     formato,
+    isbn,
     fecha: new Date().toISOString().split('T')[0],
   });
  
   try {
     await newOnlineReading.save();
-    res.status(201).json(newOnlineReading.cleanup()); // Responder con la lectura recién creada
+    res.status(201).json(newOnlineReading.cleanup());
   } catch (e) {
     debug('DB problem', e);
     res.status(500).json({

@@ -10,7 +10,6 @@ RUN npm install
 COPY authentication/ ./authentication
 COPY bin/ ./bin
 COPY models/ ./models
-COPY public/ ./public
 COPY routes/ ./routes
 COPY app.js .
 COPY db.js .

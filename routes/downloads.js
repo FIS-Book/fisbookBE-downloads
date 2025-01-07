@@ -148,12 +148,6 @@ router.post('/downloads', authenticateAndAuthorize(['User', 'Admin']), async fun
     });
   }
  
-  if (formato !== 'PDF') {
-    return res.status(400).json({
-      message: 'El formato solo puede ser PDF.'
-    });
-  }
- 
   const newDownload = new Download({
     usuarioId,
     isbn,
