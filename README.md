@@ -1,6 +1,6 @@
 # 👥 Microservicio REST - Downloads Service  
-
-Este proyecto es un microservicio REST diseñado para gestionar descargas de libros. Implementa una arquitectura orientada a microservicios utilizando tecnologías modernas y escalables.  
+---
+Este proyecto es un microservicio REST diseñado para gestionar descargas de libros y lecturas online. 
 ---
 
 ## 🚀 Características Principales  
@@ -61,7 +61,7 @@ El microservicio expone las siguientes APIs REST para interactuar con los datos 
 {
   "usuarioId": "string",
   "libro": "string",
-  "formato": "string" // Opcional: valores posibles "PDF", "EPUB", "MOBI" (default: "PDF")
+  "formato": "string" 
 }
 ```
 
