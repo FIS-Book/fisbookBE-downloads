@@ -13,6 +13,7 @@ COPY models/ ./models
 COPY public/ ./public
 COPY routes/ ./routes
 COPY app.js .
+COPY db.js .
      
 EXPOSE 2000
 

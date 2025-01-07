@@ -11,25 +11,17 @@ const authenticateAndAuthorize = require('../authentication/authenticateAndAutho
 *     summary: Obtiene todas las lecturas en línea.
 *     responses:
 *       200:
-*         description: Lista de lecturas obtenida exitosamente.
-*         content:
-*           application/json:
-*             schema:
-*               type: array
-*               items:
-*                 $ref: '#/components/schemas/OnlineReading'
+*         description: Obtiene todas las lecturas en línea.
 *       500:
 *         description: Error en el servidor.
 */
 router.get('/onlineReadings', authenticateAndAuthorize(['Admin']), async function(req, res, next) {
   try {
-    // Obtener todas las lecturas en línea de la base de datos
     const onlineReadings = await OnlineReading.find();
 
-    // Retornar la respuesta con las lecturas en línea
     res.status(200).json({ onlineReadings });
   } catch (error) {
-    res.status(500).json({ message: 'Error en el servidor' }); // Solo enviamos la respuesta con json
+    res.status(500).json({ message: 'Error en el servidor' });
   }
   
 });
@@ -50,26 +42,23 @@ router.get('/onlineReadings', authenticateAndAuthorize(['Admin']), async functio
 *     responses:
 *       200:
 *         description: Lectura obtenida exitosamente.
-*         content:
-*           application/json:
-*             schema:
-*               $ref: '#/components/schemas/OnlineReading'
 *       404:
 *         description: Lectura no encontrada.
 *       500:
 *         description: Error en el servidor.
 */
+
 router.get('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   try {
-    const onlineReading = await OnlineReading.findById(id); // Buscar la lectura en línea por ID en la base de datos
+    const onlineReading = await OnlineReading.findById(id);
     if (!onlineReading) {
-      return res.status(404).json({ message: 'Lectura en línea no encontrada' }); // Si no se encuentra, responde con un error 404
+      return res.status(404).json({ message: 'Lectura en línea no encontrada' });
     }
     res.json(onlineReading.cleanup()); // Devuelve la lectura con limpieza de atributos
   } catch (e) {
     debug('DB problem', e);
-    res.status(500).json({ message: 'Error en el servidor' }); // En caso de error, responde con un mensaje de error
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 });
 
@@ -103,10 +92,6 @@ router.get('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), a
 *     responses:
 *       201:
 *         description: Lectura en línea creada exitosamente.
-*         content:
-*           application/json:
-*             schema:
-*               $ref: '#/components/schemas/OnlineReading'
 *       400:
 *         description: Datos inválidos.
 *       500:
@@ -115,28 +100,24 @@ router.get('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), a
 router.post('/onlineReadings/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const { usuarioId, titulo, autor, idioma, formato = 'PDF' } = req.body;
  
-  // Validar datos obligatorios
   if (!usuarioId || !titulo || !autor || !idioma) {
     return res.status(400).json({
       message: 'Faltan datos obligatorios: usuarioId, titulo, autor, idioma.'
     });
   }
  
-  // Validación del título
   if (titulo.length < 3 || titulo.length > 121) {
     return res.status(400).json({
       message: 'El título debe tener entre 3 y 121 caracteres.'
     });
   }
  
-  // Validación de idioma
   if (!['en', 'es', 'fr', 'de', 'it', 'pt'].includes(idioma)) {
     return res.status(400).json({
       message: 'El idioma debe ser uno de los siguientes: en, es, fr, de, it, pt.'
     });
   }
  
-  // Validación de formato
   if (formato !== 'PDF') {
     return res.status(400).json({
       message: 'El formato solo puede ser PDF.'
@@ -149,11 +130,10 @@ router.post('/onlineReadings/', authenticateAndAuthorize(['User', 'Admin']), asy
     autor,
     idioma,
     formato,
-    fecha: new Date().toISOString().split('T')[0], // Fecha actual
+    fecha: new Date().toISOString().split('T')[0],
   });
  
   try {
-    // Guardar la nueva lectura en la base de datos
     await newOnlineReading.save();
     res.status(201).json(newOnlineReading.cleanup()); // Responder con la lectura recién creada
   } catch (e) {
@@ -188,14 +168,14 @@ router.delete('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin'])
   const id = req.params.id; // Obtener el ID de la URL
 
   try {
-    const onlineReading = await OnlineReading.findByIdAndDelete(id); // Eliminar la lectura en línea de la base de datos
+    const onlineReading = await OnlineReading.findByIdAndDelete(id);
     if (!onlineReading) {
-      return res.status(404).json({ message: 'Lectura en línea no encontrada' }); // Si no se encuentra, responde con un error 404
+      return res.status(404).json({ message: 'Lectura en línea no encontrada' });
     }
-    res.json({ message: 'Lectura eliminada' }); // Responde con un mensaje de éxito
+    res.json({ message: 'Lectura eliminada' });
   } catch (e) {
     debug('DB problem', e);
-    res.status(500).json({ message: 'Error en el servidor' }); // En caso de error, responde con un mensaje de error
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 });
 

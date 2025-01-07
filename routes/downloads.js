@@ -6,17 +6,23 @@ const authenticateAndAuthorize = require('../authentication/authenticateAndAutho
 const axios = require('axios');
 
 // Microservicio de Lista de Lecturas
-const MS_READING_LIST_URL = process.env.MS_READING_LIST_URL;
 const BASE_URL = process.env.BASE_URL;
 
 // HEALTH CHECK
+/** 
+ * @swagger
+ * /healthz:
+ *   get:
+ *     tags:
+ *       - Health
+ *     description: 'Endpoint to check the health status of the service.'
+ *     responses:
+ *       200:
+ *         $ref: '#/responses/ServiceHealthy'
+ *       500:
+ *         $ref: '#/responses/ServerError'
+ */
 router.get('/healthz', (req, res) => {
-  /* 
-  #swagger.tags = ['Health']
-  #swagger.description = 'Endpoint to check the health status of the service.'
-  #swagger.responses[200] = { $ref: '#/responses/ServiceHealthy' }
-  #swagger.responses[500] = { $ref: '#/responses/ServerError' }
-*/
 res.sendStatus(200);
 });
 
@@ -41,13 +47,10 @@ res.sendStatus(200);
 /* GET /downloads - Obtener todas las descargas */
 router.get('/downloads', authenticateAndAuthorize(['Admin']), async function(req, res, next) {
   try {
-    // Obtener todas las descargas desde la base de datos
     const downloads = await Download.find();
  
-    // Retornar la respuesta con las descargas
     res.status(200).json({ downloads });
   } catch (error) {
-    // En caso de error, retornamos un mensaje de error
     res.status(500).json({ message: 'Error en el servidor' });
   }
 });
@@ -94,59 +97,57 @@ router.get('/downloads/:id', authenticateAndAuthorize(['User', 'Admin']), async 
 });
 
 /** 
-* @swagger
-* /api/v1/read-and-download/downloads:
-*   post:
-*     summary: Crea una nueva descarga.
-*     requestBody:
-*       required: true
-*       content:
-*         application/json:
-*           schema:
-*             type: object
-*             properties:
-*               usuarioId:
-*                 type: string
-*               libro:
-*                 type: string
-*               formato:
-*                 type: string
-*                 default: PDF
-*     responses:
-*       201:
-*         description: Descarga creada exitosamente.
-*         content:
-*           application/json:
-*             schema:
-*               $ref: '#/components/schemas/Download'
-*       500:
-*         description: Error en el servidor.
-*/
+ * @swagger
+ * /api/v1/read-and-download/downloads:
+ *   post:
+ *     summary: Crea una nueva descarga.
+ *     description: Este endpoint permite crear una nueva descarga en la base de datos.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               usuarioId:
+ *                 type: string
+ *                 description: ID del usuario que realiza la descarga.
+ *               libro:
+ *                 type: string
+ *                 description: Título del libro que se está descargando.
+ *               formato:
+ *                 type: string
+ *                 description: El formato del archivo a descargar. El valor predeterminado es "PDF".
+ *                 default: PDF
+ *     responses:
+ *       201:
+ *         description: Descarga creada exitosamente.
+ *       400:
+ *         description: Datos inválidos o faltantes. 
+ *       500:
+ *         description: Error inesperado al guardar la descarga. Inténtelo más tarde.
+ */
 router.post('/downloads', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const { usuarioId, isbn, titulo, autor, idioma, formato = 'PDF' } = req.body;
  
-  // Validar datos obligatorios
   if (!usuarioId || !isbn || !titulo || !autor || !idioma) {
     return res.status(400).json({
       message: 'Faltan datos obligatorios'
     });
   }
  
-  // Validación del título
   if (titulo.length < 3 || titulo.length > 121) {
     return res.status(400).json({
       message: 'El título debe tener entre 3 y 121 caracteres.'
     });
   }
  
-  // Validación de idioma
   if (!['en', 'es', 'fr', 'de', 'it', 'pt'].includes(idioma)) {
     return res.status(400).json({
       message: 'El idioma debe ser uno de los siguientes: en, es, fr, de, it, pt.'
     });
   }
  
-  // Validación de formato
   if (formato !== 'PDF') {
     return res.status(400).json({
       message: 'El formato solo puede ser PDF.'
@@ -160,13 +161,12 @@ router.post('/downloads', authenticateAndAuthorize(['User', 'Admin']), async fun
     autor,
     idioma,
     formato,
-    fecha: new Date().toISOString().split('T')[0], // Fecha actual
+    fecha: new Date().toISOString().split('T')[0],
   });
  
   try {
-    // Guardar la nueva descarga en la base de datos
     await newDownload.save();
-    res.status(201).json(newDownload);  // Responder con la descarga recién creada
+    res.status(201).json(newDownload); 
   } catch (e) {
     console.error('Error al guardar la descarga:', e);
     res.status(500).json({
@@ -181,36 +181,37 @@ router.post('/downloads', authenticateAndAuthorize(['User', 'Admin']), async fun
  * /api/v1/read-and-download/downloads/{id}:
  *   delete:
  *     summary: Elimina una descarga por ID.
+ *     description: Este endpoint elimina una descarga específica de la base de datos usando el ID de la descarga.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: ID de la descarga.
+ *         description: ID único de la descarga que se desea eliminar.
  *         schema:
  *           type: string
  *     responses:
  *       200:
  *         description: Descarga eliminada exitosamente.
  *       404:
- *         description: Descarga no encontrada.
+ *         description: No se encontró la descarga con el ID proporcionado.
  *       500:
- *         description: Error en el servidor.
+ *         description: Error inesperado en el servidor al intentar eliminar la descarga.
  */
 
 router.delete('/downloads/:id', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
-  const id = req.params.id; // Obtener el ID de la URL
+  const id = req.params.id; 
 
   try {
-    const download = await Download.findByIdAndDelete(id); // Eliminar la descarga de la base de datos
+    const download = await Download.findByIdAndDelete(id); 
 
     if (!download) {
-      return res.status(404).json({ message: 'Descarga no encontrada' }); // Si no se encuentra, responde con un error 404
+      return res.status(404).json({ message: 'Descarga no encontrada' }); 
     }
 
-    res.json({ message: 'Descarga eliminada' }); // Responde con un mensaje de éxito
+    res.json({ message: 'Descarga eliminada' });
   } catch (e) {
     debug('DB problem', e);
-    res.sendStatus(500); // En caso de error, responde con un código 500
+    res.sendStatus(500);
   }
 });
 
@@ -218,12 +219,12 @@ router.delete('/downloads/:id', authenticateAndAuthorize(['Admin']), async funct
 
 /**
  * @swagger
- * /api/v1/read-and-download/downloads/count/:isbn:
+ * /api/v1/read-and-download/downloads/count/{isbn}:
  *   get:
  *     summary: Cuenta las descargas de un libro.
- *     description: Devuelve el número de veces que un libro con un ISBN específico ha sido descargado.
+ *     description: Devuelve el número de veces que un libro con un ISBN específico ha sido descargado y actualiza el número haciendo un PATCH al MS_CATALOGUE.
  *     parameters:
- *       - in: query
+ *       - in: path
  *         name: isbn
  *         required: true
  *         description: El ISBN del libro del cual se desea conocer el número de descargas.
@@ -252,29 +253,24 @@ router.delete('/downloads/:id', authenticateAndAuthorize(['Admin']), async funct
 router.get('/downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
   const { isbn } = req.params;
 
-  // Validar que el ISBN esté presente y tenga el formato correcto
   if (!isbn || !/^(?:\d{9}X|\d{10}|\d{13})$/.test(isbn)) {
     return res.status(400).json({ message: 'El ISBN es inválido o falta en la solicitud.' });
   }
 
-  // Obtener el token desde el encabezado de autorización
   const token = req.headers.authorization && req.headers.authorization.split(' ')[1]; // Se asume que el token viene en el formato "Bearer <token>"
 
-  // Validar que el token esté presente
   if (!token) {
     return res.status(401).json({ message: 'Token de autorización no proporcionado.' });
   }
 
   try {
-    // Buscar las descargas del libro por ISBN en la base de datos
+    // Paso 1: Buscar las descargas del libro por ISBN en la base de datos
     const downloadCount = await Download.countDocuments({ isbn });
 
-    // Si no se encontraron descargas
     if (downloadCount === 0) {
       return res.status(404).json({ message: 'No se encontraron descargas para este libro.' });
     }
 
-    // Asegúrate de que downloadCount sea un número entero
     const downloadCountInt = parseInt(downloadCount, 10);
     
     if (isNaN(downloadCountInt)) {
@@ -283,14 +279,13 @@ router.get('/downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin'])
 
     // Paso 2: Actualizar el número de descargas en el microservicio del catálogo
     await axios.patch(`${BASE_URL}/api/v1/books/${isbn}/downloads`, {
-      downloadCount: downloadCountInt // Enviar el número de descargas como un entero
+      downloadCount: downloadCountInt 
     }, {
       headers: {
-        'Authorization': `Bearer ${token}` // Asegúrate de enviar el token de autorización correctamente
+        'Authorization': `Bearer ${token}`
       }
     });
 
-    // Responder con el número de descargas
     return res.status(200).json({ count: downloadCountInt });
 
   } catch (error) {
@@ -305,7 +300,7 @@ router.get('/downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin'])
  * /api/v1/read-and-download/downloads/user/count:
  *   get:
  *     summary: Cuenta el número de descargas realizadas por un usuario.
- *     description: Devuelve el número de descargas realizadas por un usuario dado su `usuarioId`.
+ *     description: Devuelve el número de descargas realizadas por un usuario dado su `usuarioId` y actualiza el número haciendo un PATCH al MS_USERS.
  *     parameters:
  *       - in: query
  *         name: usuarioId
@@ -332,11 +327,10 @@ router.get('/downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin'])
  *       500:
  *         description: Error inesperado del servidor.
  */
-// La url debe ser así: /api/v1/read-and-download/downloads/user/count?usuarioId=677918707b978a621e439cd7
 
 router.get('/downloads/user/count', async (req, res) => {
   const { usuarioId } = req.query;
-  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];  // Se asume que el token es enviado en el formato "Bearer <token>"
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
 
   if (!usuarioId || !token) {
     return res.status(400).json({ message: 'Faltan parámetros: usuarioId o token.' });
@@ -354,10 +348,10 @@ router.get('/downloads/user/count', async (req, res) => {
 
     // Paso 2: Actualizar el número de descargas en el microservicio de usuarios
     await axios.patch(`${BASE_URL}/api/v1/auth/users/${usuarioId}/downloads`, {
-      numDescargas: downloadCount  // Enviar el número de descargas como un entero
+      numDescargas: downloadCount 
     }, {
       headers: {
-        'Authorization': `Bearer ${token}`  // Enviar el token de autorización
+        'Authorization': `Bearer ${token}`
       }
     });
 
