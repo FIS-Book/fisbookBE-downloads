@@ -21,15 +21,19 @@ const authenticateAndAuthorize = require('../authentication/authenticateAndAutho
 *       500:
 *         description: Error en el servidor.
 */
-router.get('/onlineReadings/', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
+router.get('/onlineReadings', authenticateAndAuthorize(['Admin']), async function(req, res, next) {
   try {
-    const result = await OnlineReading.find(); // Obtiene todas las lecturas en línea desde la base de datos
-    res.json(result.map((c) => c.cleanup())); // Devuelve las lecturas con limpieza de atributos
-  } catch (e) {
-    debug('DB problem', e);
-    res.status(500).json({ message: 'Error en el servidor' }); // En caso de error, responde con un mensaje de error
+    // Obtener todas las lecturas en línea de la base de datos
+    const onlineReadings = await OnlineReading.find();
+
+    // Retornar la respuesta con las lecturas en línea
+    res.status(200).json({ onlineReadings });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor' }); // Solo enviamos la respuesta con json
   }
+  
 });
+
 
 /**
 * @swagger
@@ -55,7 +59,7 @@ router.get('/onlineReadings/', authenticateAndAuthorize(['Admin']), async functi
 *       500:
 *         description: Error en el servidor.
 */
-router.get('/onlineReadings/:id', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
+router.get('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
   try {
     const onlineReading = await OnlineReading.findById(id); // Buscar la lectura en línea por ID en la base de datos
@@ -108,157 +112,45 @@ router.get('/onlineReadings/:id', authenticateAndAuthorize(['Admin']), async fun
 *       500:
 *         description: Error en el servidor.
 */
-router.post('/onlineReadings/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
-  const { usuarioId, titulo, autor, idioma, formato = 'PDF' } = req.body;
+router.post('/onlinereadings', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+  const { usuarioId, isbn, titulo, autor, idioma, formato } = req.body;
 
-  // Validar datos obligatorios
-  if (!usuarioId || !titulo || !autor || !idioma) {
-    return res.status(400).json({ 
-      message: 'Faltan datos obligatorios: usuarioId, titulo, autor, idioma.'
-    });
+  // Validar los datos antes de guardar
+  if (!isbn.match(/^(?:\d{9}X|\d{10}|\d{13})$/)) {
+    return res.status(400).json({ message: 'Invalid ISBN format. Must be ISBN-10 or ISBN-13.' });
   }
 
-  // Validación del título
   if (titulo.length < 3 || titulo.length > 121) {
-    return res.status(400).json({
-      message: 'El título debe tener entre 3 y 121 caracteres.'
-    });
+    return res.status(400).json({ message: 'The title must be at least 3 characters long and cannot be longer than 121 characters.' });
   }
 
-  // Validación de idioma
   if (!['en', 'es', 'fr', 'de', 'it', 'pt'].includes(idioma)) {
-    return res.status(400).json({
-      message: 'El idioma debe ser uno de los siguientes: en, es, fr, de, it, pt.'
-    });
+    return res.status(400).json({ message: 'The language must be one of the following: en, es, fr, de, it, pt.' });
   }
 
-  // Validación de formato
-  if (formato !== 'PDF') {
-    return res.status(400).json({
-      message: 'El formato solo puede ser PDF.'
-    });
+  if (formato && formato !== 'PDF') {
+    return res.status(400).json({ message: 'The format must be PDF.' });
   }
 
+  // Crear la nueva lectura en línea
   const newOnlineReading = new OnlineReading({
     usuarioId,
+    isbn,
     titulo,
     autor,
     idioma,
-    formato,
-    fecha: new Date().toISOString().split('T')[0], // Fecha actual
+    formato: formato || 'PDF', // Si no se proporciona formato, se asigna 'PDF' por defecto
+    fecha: new Date().toISOString().split('T')[0], // Fecha actual en formato 'YYYY-MM-DD'
   });
 
   try {
-    // Guardar la nueva lectura en la base de datos
-    await newOnlineReading.save();
-    res.status(201).json(newOnlineReading.cleanup()); // Responder con la lectura recién creada
+    await newOnlineReading.save(); // Guardar la nueva lectura en línea en la base de datos
+    res.status(201).json(newOnlineReading.cleanup()); // Respuesta exitosa con código 201
   } catch (e) {
-    debug('DB problem', e);
-    res.status(500).json({
-      message: 'Error en el servidor al guardar la lectura en línea. Por favor, inténtelo más tarde.'
-    });
+    console.error('DB problem', e);
+    res.sendStatus(500); // En caso de error, responde con un código 500
   }
 });
-
-
-/**
-* @swagger
-* /api/v1/read-and-download/onlineReadings/{id}:
-*   put:
-*     summary: Actualiza una lectura en línea por ID.
-*     parameters:
-*       - in: path
-*         name: id
-*         required: true
-*         description: ID de la lectura.
-*         schema:
-*           type: string
-*     requestBody:
-*       required: true
-*       content:
-*         application/json:
-*           schema:
-*             type: object
-*             properties:
-*               usuarioId:
-*                 type: number
-*               isbn:
-*                 type: string
-*               titulo:
-*                 type: string
-*               autor:
-*                 type: string
-*               idioma:
-*                 type: string
-*                 enum: ['en', 'es', 'fr', 'de', 'it', 'pt']
-*               formato:
-*                 type: string
-*                 enum: ['PDF', 'EPUB']
-*     responses:
-*       200:
-*         description: Lectura en línea actualizada exitosamente.
-*         content:
-*           application/json:
-*             schema:
-*               $ref: '#/components/schemas/OnlineReading'
-*       404:
-*         description: Lectura no encontrada.
-*       400:
-*         description: Datos inválidos.
-*       500:
-*         description: Error en el servidor.
-*/
-router.put('/onlineReadings/:id', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
-  const id = req.params.id; // Obtener el ID de la URL
-  const { usuarioId, titulo, autor, idioma, formato } = req.body; // Obtener datos de la solicitud
-
-  try {
-    // Buscar la lectura por ID
-    const onlineReading = await OnlineReading.findById(id);
-    if (!onlineReading) {
-      return res.status(404).json({
-        message: 'Lectura en línea no encontrada. Asegúrese de que el ID sea válido.'
-      });
-    }
-
-    // Validación del título
-    if (titulo && (titulo.length < 3 || titulo.length > 121)) {
-      return res.status(400).json({
-        message: 'El título debe tener entre 3 y 121 caracteres.'
-      });
-    }
-
-    // Validación de idioma
-    if (idioma && !['en', 'es', 'fr', 'de', 'it', 'pt'].includes(idioma)) {
-      return res.status(400).json({
-        message: 'El idioma debe ser uno de los siguientes: en, es, fr, de, it, pt.'
-      });
-    }
-
-    // Validación de formato
-    if (formato && formato !== 'PDF') {
-      return res.status(400).json({
-        message: 'El formato solo puede ser PDF.'
-      });
-    }
-
-    // Actualizar la lectura en línea
-    onlineReading.usuarioId = usuarioId || onlineReading.usuarioId;
-    onlineReading.titulo = titulo || onlineReading.titulo;
-    onlineReading.autor = autor || onlineReading.autor;
-    onlineReading.idioma = idioma || onlineReading.idioma;
-    onlineReading.formato = formato || onlineReading.formato;
-
-    await onlineReading.save(); // Guardar cambios en la base de datos
-    res.status(200).json(onlineReading.cleanup()); // Responder con la lectura actualizada
-  } catch (e) {
-    debug('DB problem', e);
-    res.status(500).json({
-      message: 'Error en el servidor al actualizar la lectura. Por favor, inténtelo más tarde.'
-    });
-  }
-});
-
 
 /**
 * @swagger
@@ -280,7 +172,7 @@ router.put('/onlineReadings/:id', authenticateAndAuthorize(['Admin']), async fun
 *       500:
 *         description: Error en el servidor.
 */
-router.delete('/onlineReadings/:id', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
+router.delete('/onlineReadings/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
   const id = req.params.id; // Obtener el ID de la URL
 
   try {
