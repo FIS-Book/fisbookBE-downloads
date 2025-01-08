@@ -3,12 +3,13 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 require('dotenv').config(); // Cargar variables de entorno
+const db = require('./db.js');
+const cors = require('cors');
 
-var indexRouter = require('./routes/index');
 var downloadsRouter = require('./routes/downloads');
 var onlineReadingsRouter = require('./routes/onlinereadings');
 
-var app = express(); // Declaración única de 'app'
+var app = express();
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -16,20 +17,14 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
+app.use(cors({
+  origin: [`${process.env.BASE_URL}`,'http://localhost:3000'], // Permitir solicitudes desde este dominio
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], // Métodos permitidos
+  allowedHeaders: ['Content-Type', 'Authorization'], // Encabezados permitidos
+}));
+
 app.use('/api/v1/read-and-download', downloadsRouter);
 app.use('/api/v1/read-and-download', onlineReadingsRouter);
-
-// Conexión a MongoDB
-const mongoose = require('mongoose');
-const uri = process.env.MONGO_URI_DOWNLOADS;
-
-mongoose.connect(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => console.log('✅ Conexión exitosa a MongoDB Atlas'))
-.catch(err => console.error('❌ Error al conectar a MongoDB Atlas:', err));
 
 // Configuración de Swagger
 const swaggerUi = require('swagger-ui-express');
@@ -54,16 +49,6 @@ const swaggerOptions = {
 
 // Initialize SwaggerJSDoc
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
-
-// Serve Swagger UI
-app.use('/api/v1/read-and-download', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
-// Iniciar el servidor
-
-const PORT = process.env.PORT || 2000;
-app.listen(PORT, () => {
-  console.log(`🌟 Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`📖 Documentación Swagger disponible en http://localhost:${PORT}/api-docs`);
-});
+app.use('/api/v1/read-and-download/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 module.exports = app;

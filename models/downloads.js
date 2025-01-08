@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 // Esquema para las descargas
 const downloadsSchema = new mongoose.Schema({
   usuarioId: {
-    type: Number,
-    required: true // ID del usuario asociado a la descarga
+    type: String, 
+    required: true,
   },
   isbn: {
     type: String,
@@ -46,7 +46,7 @@ downloadsSchema.methods.cleanup = function () {
   return {
     id: this._id,
     usuarioId: this.usuarioId,
-    isbn: this.isbn4,
+    isbn: this.isbn,
     titulo: this.titulo,
     autor: this.autor,
     idioma: this.idioma,

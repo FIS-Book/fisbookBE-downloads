@@ -6,16 +6,23 @@ const authenticateAndAuthorize = require('../authentication/authenticateAndAutho
 const axios = require('axios');
 
 // Microservicio de Lista de Lecturas
-const MS_READING_URL = process.env.MS_READING_URL; // URL del microservicio de listas de lectura
+const BASE_URL = process.env.BASE_URL;
 
 // HEALTH CHECK
+/** 
+ * @swagger
+ * /healthz:
+ *   get:
+ *     tags:
+ *       - Health
+ *     description: 'Endpoint to check the health status of the service.'
+ *     responses:
+ *       200:
+ *         $ref: '#/responses/ServiceHealthy'
+ *       500:
+ *         $ref: '#/responses/ServerError'
+ */
 router.get('/healthz', (req, res) => {
-  /* 
-  #swagger.tags = ['Health']
-  #swagger.description = 'Endpoint to check the health status of the service.'
-  #swagger.responses[200] = { $ref: '#/responses/ServiceHealthy' }
-  #swagger.responses[500] = { $ref: '#/responses/ServerError' }
-*/
 res.sendStatus(200);
 });
 
@@ -38,13 +45,13 @@ res.sendStatus(200);
  */
 
 /* GET /downloads - Obtener todas las descargas */
-router.get('/downloads/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+router.get('/downloads', authenticateAndAuthorize(['Admin']), async function(req, res, next) {
   try {
-    const result = await Download.find(); // Obtiene todas las descargas desde la base de datos
-    res.json(result.map((c) => c.cleanup())); // Devuelve las descargas con limpieza de atributos
-  } catch (e) {
-    debug('DB problem', e);
-    res.sendStatus(500); // En caso de error, responde con un código 500
+    const downloads = await Download.find();
+ 
+    res.status(200).json({ downloads });
+  } catch (error) {
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 });
 
@@ -73,123 +80,132 @@ router.get('/downloads/', authenticateAndAuthorize(['User', 'Admin']), async fun
  *         description: Error en el servidor.
  */
 
-router.get('/downloads/:id',authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
-  const id = req.params.id; // Obtener el ID de la URL
+router.get('/downloads/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+  const id = req.params.id;
   try {
-    const download = await Download.findById(id); // Buscar la descarga por ID en la base de datos
+    const download = await Download.findById(id);
     if (!download) {
-      return res.status(404).json({ message: 'Descarga no encontrada' }); // Si no se encuentra, responde con un error 404
+      return res.status(404).json({ message: 'Descarga no encontrada' });
     }
-    res.json(download.cleanup()); // Devuelve la descarga con limpieza de atributos
+ 
+    const response = download.cleanup ? download.cleanup() : download;
+    res.json(response);
   } catch (e) {
     debug('DB problem', e);
-    res.sendStatus(500); // En caso de error, responde con un código 500
+    res.status(500).json({ error: 'Unexpected server error' });
   }
 });
 
-
-/*
-*   post:
-*     summary: Crea una nueva descarga.
-*     requestBody:
-*       required: true
-*       content:
-*         application/json:
-*           schema:
-*             type: object
-*             properties:
-*               usuarioId:
-*                 type: string
-*               libro:
-*                 type: string
-*               formato:
-*                 type: string
-*                 default: PDF
-*     responses:
-*       201:
-*         description: Descarga creada exitosamente.
-*         content:
-*           application/json:
-*             schema:
-*               $ref: '#/components/schemas/Download'
-*       500:
-*         description: Error en el servidor.
-*/
-router.post('/downloads/', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
-  const { usuarioId, libro, formato } = req.body; // Obtener los datos del cuerpo de la solicitud
-
-  // Validar los datos antes de guardar
-  if (!isbn.match(/^(?:\d{9}X|\d{10}|\d{13})$/)) {
-    return res.status(400).json({ message: 'Invalid ISBN format. Must be ISBN-10 or ISBN-13.' });
+/** 
+ * @swagger
+ * /api/v1/read-and-download/downloads:
+ *   post:
+ *     summary: Crea una nueva descarga.
+ *     description: Este endpoint permite crear una nueva descarga en la base de datos.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               usuarioId:
+ *                 type: string
+ *                 description: ID del usuario que realiza la descarga.
+ *               libro:
+ *                 type: string
+ *                 description: Título del libro que se está descargando.
+ *               formato:
+ *                 type: string
+ *                 description: El formato del archivo a descargar. El valor predeterminado es "PDF".
+ *                 default: PDF
+ *     responses:
+ *       201:
+ *         description: Descarga creada exitosamente.
+ *       400:
+ *         description: Datos inválidos o faltantes. 
+ *       500:
+ *         description: Error inesperado al guardar la descarga. Inténtelo más tarde.
+ */
+router.post('/downloads', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
+  const { usuarioId, isbn, titulo, autor, idioma, formato} = req.body;
+ 
+  if (!usuarioId || !isbn || !titulo || !autor || !idioma) {
+    return res.status(400).json({
+      message: 'Faltan datos obligatorios'
+    });
   }
-
+ 
   if (titulo.length < 3 || titulo.length > 121) {
-    return res.status(400).json({ message: 'The title must be at least 3 characters long and cannot be longer than 121 characters.' });
+    return res.status(400).json({
+      message: 'El título debe tener entre 3 y 121 caracteres.'
+    });
   }
-
+ 
   if (!['en', 'es', 'fr', 'de', 'it', 'pt'].includes(idioma)) {
-    return res.status(400).json({ message: 'The language must be one of the following: en, es, fr, de, it, pt.' });
+    return res.status(400).json({
+      message: 'El idioma debe ser uno de los siguientes: en, es, fr, de, it, pt.'
+    });
   }
-
-  if (!['PDF', 'EPUB'].includes(formato)) {
-    return res.status(400).json({ message: 'The format must be either PDF or EPUB.' });
-  }
-
-  // Crear la nueva descarga
+ 
   const newDownload = new Download({
     usuarioId,
     isbn,
     titulo,
     autor,
     idioma,
-    formato: formato || 'PDF', // Si no se proporciona formato, se asigna 'PDF' por defecto
-    fecha: new Date().toISOString().split('T')[0], // Fecha actual en formato 'YYYY-MM-DD'
+    formato,
+    fecha: new Date().toISOString().split('T')[0],
   });
-
+ 
   try {
-    await newDownload.save(); // Guardar la nueva descarga en la base de datos
-    res.status(201).json(newDownload.cleanup()); // Respuesta exitosa con código 201
+    await newDownload.save();
+    res.status(201).json(newDownload); 
   } catch (e) {
-    console.error('DB problem', e);
-    res.sendStatus(500); // En caso de error, responde con un código 500
+    console.error('Error al guardar la descarga:', e);
+    res.status(500).json({
+      message: 'Error en el servidor al guardar la descarga. Por favor, inténtelo más tarde.'
+    });
   }
 });
+
 
 /**
  * @swagger
  * /api/v1/read-and-download/downloads/{id}:
  *   delete:
  *     summary: Elimina una descarga por ID.
+ *     description: Este endpoint elimina una descarga específica de la base de datos usando el ID de la descarga.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
- *         description: ID de la descarga.
+ *         description: ID único de la descarga que se desea eliminar.
  *         schema:
  *           type: string
  *     responses:
  *       200:
  *         description: Descarga eliminada exitosamente.
  *       404:
- *         description: Descarga no encontrada.
+ *         description: No se encontró la descarga con el ID proporcionado.
  *       500:
- *         description: Error en el servidor.
+ *         description: Error inesperado en el servidor al intentar eliminar la descarga.
  */
 
-router.delete('/downloads/:id', authenticateAndAuthorize(['User', 'Admin']), async function (req, res, next) {
-  const id = req.params.id; // Obtener el ID de la URL
+router.delete('/downloads/:id', authenticateAndAuthorize(['Admin']), async function (req, res, next) {
+  const id = req.params.id; 
 
   try {
-    const download = await Download.findByIdAndDelete(id); // Eliminar la descarga de la base de datos
+    const download = await Download.findByIdAndDelete(id); 
 
     if (!download) {
-      return res.status(404).json({ message: 'Descarga no encontrada' }); // Si no se encuentra, responde con un error 404
+      return res.status(404).json({ message: 'Descarga no encontrada' }); 
     }
 
-    res.json({ message: 'Descarga eliminada' }); // Responde con un mensaje de éxito
+    res.json({ message: 'Descarga eliminada' });
   } catch (e) {
     debug('DB problem', e);
-    res.sendStatus(500); // En caso de error, responde con un código 500
+    res.sendStatus(500);
   }
 });
 
@@ -197,12 +213,12 @@ router.delete('/downloads/:id', authenticateAndAuthorize(['User', 'Admin']), asy
 
 /**
  * @swagger
- * /api/v1/read-and-download/downloads/count/:isbn:
+ * /api/v1/read-and-download/downloads/count/{isbn}:
  *   get:
  *     summary: Cuenta las descargas de un libro.
- *     description: Devuelve el número de veces que un libro con un ISBN específico ha sido descargado.
+ *     description: Devuelve el número de veces que un libro con un ISBN específico ha sido descargado y actualiza el número haciendo un PATCH al MS_CATALOGUE.
  *     parameters:
- *       - in: query
+ *       - in: path
  *         name: isbn
  *         required: true
  *         description: El ISBN del libro del cual se desea conocer el número de descargas.
@@ -228,28 +244,47 @@ router.delete('/downloads/:id', authenticateAndAuthorize(['User', 'Admin']), asy
  *         description: Error inesperado del servidor.
  */
 
-router.get('downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
-  const { isbn } = req.query;
+router.get('/downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
+  const { isbn } = req.params;
 
-  // Validar que el ISBN esté presente y tenga el formato correcto
   if (!isbn || !/^(?:\d{9}X|\d{10}|\d{13})$/.test(isbn)) {
     return res.status(400).json({ message: 'El ISBN es inválido o falta en la solicitud.' });
   }
 
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1]; // Se asume que el token viene en el formato "Bearer <token>"
+
+  if (!token) {
+    return res.status(401).json({ message: 'Token de autorización no proporcionado.' });
+  }
+
   try {
-    // Buscar las descargas del libro por ISBN
+    // Paso 1: Buscar las descargas del libro por ISBN en la base de datos
     const downloadCount = await Download.countDocuments({ isbn });
 
-    // Si no se encontraron descargas
     if (downloadCount === 0) {
       return res.status(404).json({ message: 'No se encontraron descargas para este libro.' });
     }
 
-    // Responder con el número de descargas
-    return res.status(200).json({ count: downloadCount });
+    const downloadCountInt = parseInt(downloadCount, 10);
+    
+    if (isNaN(downloadCountInt)) {
+      return res.status(400).json({ message: 'El número de descargas es inválido.' });
+    }
+
+    // Paso 2: Actualizar el número de descargas en el microservicio del catálogo
+    await axios.patch(`${BASE_URL}/api/v1/books/${isbn}/downloads`, {
+      downloadCount: downloadCountInt 
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    return res.status(200).json({ count: downloadCountInt });
+
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Error inesperado en el servidor.', error: error.message });
+    return res.status(500).json({ message: 'Error inesperado en el servidor.', error: error.response ? error.response.data : error.message });
   }
 });
 
@@ -259,15 +294,15 @@ router.get('downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin']),
  * /api/v1/read-and-download/downloads/user/count:
  *   get:
  *     summary: Cuenta el número de descargas realizadas por un usuario.
- *     description: Devuelve el número de descargas realizadas por un usuario dado su `usuarioId`.
+ *     description: Devuelve el número de descargas realizadas por un usuario dado su `usuarioId` y actualiza el número haciendo un PATCH al MS_USERS.
  *     parameters:
  *       - in: query
  *         name: usuarioId
  *         required: true
  *         description: El ID del usuario cuyo número de descargas se desea conocer.
  *         schema:
- *           type: number
- *           example: 1234567890
+ *           type: string
+ *           example: 677918707b978a621e439cd7
  *     responses:
  *       200:
  *         description: El número de descargas realizadas por el usuario.
@@ -287,120 +322,38 @@ router.get('downloads/count/:isbn', authenticateAndAuthorize(['User', 'Admin']),
  *         description: Error inesperado del servidor.
  */
 
-router.get('/downloads/user/count', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
+router.get('/downloads/user/count', async (req, res) => {
   const { usuarioId } = req.query;
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
 
-  // Validar que el usuarioId esté presente y sea un número
-  if (!usuarioId || typeof usuarioId !== 'number') {
-    return res.status(400).json({ message: 'El ID de usuario es inválido o falta en la solicitud.' });
+  if (!usuarioId || !token) {
+    return res.status(400).json({ message: 'Faltan parámetros: usuarioId o token.' });
   }
 
   try {
-    // Buscar las descargas del usuario por usuarioId
-    const downloadCount = await Download.countDocuments({ usuarioId });
 
-    // Si no se encontraron descargas
+    // Paso 1: Contar las descargas del usuario
+    const downloadCount = await Download.countDocuments({ usuarioId });
+    console.log(`Número de descargas: ${downloadCount}`);
+
     if (downloadCount === 0) {
       return res.status(404).json({ message: 'No se encontraron descargas para este usuario.' });
     }
 
-    // Responder con el número de descargas
-    return res.status(200).json({ count: downloadCount });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Error inesperado en el servidor.', error: error.message });
-  }
-});
-
-
-/**
- * @swagger
- * /api/v1/read-and-download/downloads/download-readinglist:
- *   get:
- *     summary: Descarga todos los libros de una lista de lectura de un usuario.
- *     description: Permite descargar todos los libros asociados a un usuario.
- *     parameters:
- *       - in: query
- *         name: userId
- *         required: true
- *         description: El ID del usuario cuyos libros se desean descargar.
- *         schema:
- *           type: string
- *           example: "00000000001"
- *     responses:
- *       200:
- *         description: Libros obtenidos y descargados exitosamente.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 downloads:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       isbn:
- *                         type: string
- *                       titulo:
- *                         type: string
- *                       autor:
- *                         type: string
- *                       formato:
- *                         type: string
- *       400:
- *         description: Parámetros inválidos en la solicitud.
- *       404:
- *         description: No se encontraron libros para el usuario.
- *       500:
- *         description: Error inesperado del servidor.
- */
-
-router.get('/downloads/download-readinglist', authenticateAndAuthorize(['User', 'Admin']), async (req, res) => {
-  const { userId } = req.query;
-
-  // Validar que el userId está presente
-  if (!userId) {
-    return res.status(400).json({ message: 'El parámetro userId es obligatorio.' });
-  }
-
-  try {
-    // Hacer una solicitud al microservicio de lectura para obtener todos los libros del usuario
-    const response = await axios.get(`${MS_READING_URL}/api/v1/readings`, {
-      params: { userId: userId }
+    // Paso 2: Actualizar el número de descargas en el microservicio de usuarios
+    await axios.patch(`${BASE_URL}/api/v1/auth/users/${usuarioId}/downloads`, {
+      numDescargas: downloadCount 
+    }, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
 
-    // Verificar si se encontraron libros
-    if (!response.data || response.data.length === 0) {
-      return res.status(404).json({ message: 'No se encontraron libros para el usuario.' });
-    }
-
-    // Guardar los libros descargados en la base de datos
-    const downloads = await Promise.all(response.data.map(async (book) => {
-      const downloadEntry = new Download({
-        usuarioId: userId,
-        isbn: book.isbn,
-        titulo: book.titulo,
-        autor: book.autor,
-        formato: book.formato,
-        fecha: new Date().toISOString().split('T')[0] // Fecha actual
-      });
-
-      // Guardar la entrada de descarga en la base de datos
-      return await downloadEntry.save();
-    }));
-
-    // Responder con los libros descargados
-    return res.status(200).json({
-      message: 'Libros obtenidos y descargados exitosamente.',
-      downloads: downloads
-    });
+    return res.status(200).json({ message: `Número de descargas actualizado para ${username}: ${downloadCount}` });
 
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Error inesperado en el servidor.', error: error.message });
+    return res.status(500).json({ message: `Error al contar descargas o actualizar el usuario: ${error.message}` });
   }
 });
 

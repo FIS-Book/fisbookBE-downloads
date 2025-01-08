@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 // Esquema para las lecturas en línea
 const onlineReadingsSchema = new mongoose.Schema({
   usuarioId: {
-    type: Number,
+    type: String,
     required: true // ID del usuario asociado a la lectura en línea
   },
   isbn: {
