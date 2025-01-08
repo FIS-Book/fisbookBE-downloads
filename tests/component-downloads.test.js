@@ -246,65 +246,64 @@ describe('Downloads API', () => {
     });
   });
 
-  describe('GET /downloads/count/:isbn', () => {
-    const mockDownloadISBN = '9780590353427';
-    const mockToken = 'valid-jwt-token';
-    const BASE_URL = 'http://mock-api-url';
+  // describe('GET /downloads/count/:isbn', () => {
+  //   const mockDownloadISBN = '9780590353427';
+  //   const mockToken = 'valid-jwt-token';
+  //   const BASE_URL = 'http://mock-api-url';
   
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
+  //   beforeEach(() => {
+  //     jest.clearAllMocks();
+  //   });
   
-    // it('Debe retornar 401 si no se proporciona un token', async () => {
-    //     const response = await request(app)
-    //       .get(`/downloads/count/${mockDownloadISBN}`);
+  //   it('Debe retornar 401 si no se proporciona un token', async () => {
+  //       const response = await request(app)
+  //         .get(`/downloads/count/${mockDownloadISBN}`);
       
-    //     expect(response.statusCode).toBe(401); // Verifica que se devuelve 401
-    //     expect(response.body).toHaveProperty('message', 'Token de autorización no proporcionado.');
-    //   });
-      
+  //       expect(response.statusCode).toBe(401); // Verifica que se devuelve 401
+  //       expect(response.body).toHaveProperty('message', 'Token de autorización no proporcionado.');
+  //     });
   
-    //   it('Debe retornar 404 si no se encuentran descargas para el ISBN', async () => {
-    //     jest.spyOn(Download, 'countDocuments').mockResolvedValue(0); // Simula que no hay descargas
+  //     it('Debe retornar 404 si no se encuentran descargas para el ISBN', async () => {
+  //       jest.spyOn(Download, 'countDocuments').mockResolvedValue(0); // Simula que no hay descargas
        
-    //     const response = await request(app)
-    //       .get(`/downloads/count/${mockDownloadISBN}`)
-    //       .set('Authorization', `Bearer ${mockToken}`);
+  //       const response = await request(app)
+  //         .get(`/downloads/count/${mockDownloadISBN}`)
+  //         .set('Authorization', `Bearer ${mockToken}`);
        
-    //     expect(response.statusCode).toBe(404);
-    //     expect(response.body).toHaveProperty('message', 'No se encontraron descargas para este libro.'); // Verifica que "message" está presente
-    //   });
+  //       expect(response.statusCode).toBe(404);
+  //       expect(response.body).toHaveProperty('message', 'No se encontraron descargas para este libro.'); // Verifica que "message" está presente
+  //     });
       
   
-    //   it('Debe actualizar el número de descargas en el microservicio externo y retornar 200', async () => {
-    //     // Simula la llamada al microservicio externo
-    //     const mockDownloadISBN = '9783161484100';
-    //     const mockToken = 'valid-jwt-token';
+  //     it('Debe actualizar el número de descargas en el microservicio externo y retornar 200', async () => {
+  //       // Simula la llamada al microservicio externo
+  //       const mockDownloadISBN = '9783161484100';
+  //       const mockToken = 'valid-jwt-token';
       
-    //     const scope = nock('http://mock-api-url') // URL del microservicio
-    //       .patch(`/api/v1/books/${mockDownloadISBN}/downloads`, { downloadCount: 5 })
-    //       .reply(200, { success: true });
+  //       const scope = nock('http://mock-api-url') // URL del microservicio
+  //         .patch(`/api/v1/books/${mockDownloadISBN}/downloads`, { downloadCount: 5 })
+  //         .reply(200, { success: true });
       
-    //     const response = await request(app)
-    //       .get(`/downloads/count/${mockDownloadISBN}`)
-    //       .set('Authorization', `Bearer ${mockToken}`);
+  //       const response = await request(app)
+  //         .get(`/downloads/count/${mockDownloadISBN}`)
+  //         .set('Authorization', `Bearer ${mockToken}`);
       
-    //     expect(response.statusCode).toBe(200); // Verifica que la respuesta sea 200
-    //     expect(response.body).toHaveProperty('count', 5); // Verifica que se actualice el número de descargas
-    //   });
+  //       expect(response.statusCode).toBe(200); // Verifica que la respuesta sea 200
+  //       expect(response.body).toHaveProperty('count', 5); // Verifica que se actualice el número de descargas
+  //     });
       
   
-    //   it('Debe retornar 500 si ocurre un error interno del servidor', async () => {
-    //     // Simulamos un error en la base de datos
-    //     jest.spyOn(Download, 'countDocuments').mockRejectedValueOnce(new Error('Database error'));
+  //     it('Debe retornar 500 si ocurre un error interno del servidor', async () => {
+  //       // Simulamos un error en la base de datos
+  //       jest.spyOn(Download, 'countDocuments').mockRejectedValueOnce(new Error('Database error'));
       
-    //     const response = await request(app)
-    //       .get(`/downloads/count/${mockDownloadISBN}`)
-    //       .set('Authorization', `Bearer ${mockToken}`); // Enviamos un token válido
+  //       const response = await request(app)
+  //         .get(`/downloads/count/${mockDownloadISBN}`)
+  //         .set('Authorization', `Bearer ${mockToken}`); // Enviamos un token válido
       
-    //     expect(response.statusCode).toBe(500); // Verifica que se devuelve 500
-    //     expect(response.body).toHaveProperty('message', 'Error inesperado en el servidor.');
-    //   });
+  //       expect(response.statusCode).toBe(500); // Verifica que se devuelve 500
+  //       expect(response.body).toHaveProperty('message', 'Error inesperado en el servidor.');
+  //     });
       
-  });
+  // });
 });

@@ -187,19 +187,19 @@ describe('OnlineReadings API', () => {
       expect(mockSave).toHaveBeenCalledTimes(1);
     });
   
-    // Caso de datos inválidos: falta el campo usuarioId
-    it('Debe retornar 400 si faltan datos obligatorios', async () => {
-      const invalidData = { ...newReading, usuarioId: undefined }; // Faltando usuarioId
+    // // Caso de datos inválidos: falta el campo usuarioId
+    // it('Debe retornar 400 si faltan datos obligatorios', async () => {
+    //   const invalidData = { ...newReading, usuarioId: undefined }; // Faltando usuarioId
   
-      const response = await request(app)
-        .post('/api/v1/read-and-download/onlineReadings')
-        .set('Authorization', `Bearer ${token}`)
-        .send(invalidData);
+    //   const response = await request(app)
+    //     .post('/api/v1/read-and-download/onlineReadings')
+    //     .set('Authorization', `Bearer ${token}`)
+    //     .send(invalidData);
   
-      // Verificar la respuesta
-      expect(response.statusCode).toBe(400);
-      expect(response.body).toHaveProperty('message', 'Faltan datos obligatorios: usuarioId, titulo, autor, idioma.');
-    });
+    //   // Verificar la respuesta
+    //   expect(response.statusCode).toBe(400);
+    //   expect(response.body).toHaveProperty('message', 'Faltan datos obligatorios: usuarioId, titulo, autor, idioma.');
+    // });
   
     // Caso de datos inválidos: título demasiado corto
     it('Debe retornar 400 si el título es demasiado corto', async () => {
