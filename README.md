@@ -150,9 +150,9 @@ El microservicio expone las siguientes APIs REST para interactuar con los datos 
   "usuarioId": "string",
   "titulo": "string",
   "autor": "string",
-  "formato": "string",  // Opcional: valores posibles "PDF", "EPUB", "MOBI" (default: "PDF")
-  "idioma": "string",   // Opcional: valores permitidos "es", "en"
-  "isbn": "string"      // Opcional
+  "formato": "string",
+  "idioma": "string",
+  "isbn": "string"
 }
 ```
 
@@ -179,7 +179,8 @@ El microservicio expone las siguientes APIs REST para interactuar con los datos 
   - **`downloads.js`:** define las rutas específicas relacionadas con las descargas, incluyendo las operaciones de obtener, crear, actualizar y eliminar descargas.  
   - **`onlinereadings.js`:** define las rutas específicas relacionadas con las lecturas en línea.  
 - **`tests/`:** directorio que contiene pruebas automatizadas utilizando Jest. Se organiza en módulos para asegurar la calidad del código, con archivos de prueba para los endpoints de descargas (`component-downloads.test.js`) y lecturas online (`component-onlineReadings.test.js`).  
-- **`app.js`:** archivo principal que configura la aplicación Express. Aquí se inicializan los middlewares y las rutas de la API. También maneja la configuración de Swagger para la documentación interactiva de la API.  
+- **`app.js`:** archivo principal que configura la aplicación Express. Aquí se inicializan los middlewares y las rutas de la API. También maneja la configuración de Swagger para la documentación interactiva de la API. 
+- **`db.js` :** arvhivo para la conexión con la base de atos de MongoDB Atlas. 
 - **`Dockerfile`:** contiene las instrucciones para crear y ejecutar el contenedor Docker. En este archivo se configura la instalación de dependencias, la copia de archivos y la exposición del puerto necesario para la aplicación.  
 - **`package.json`:** Especifica las dependencias del proyecto, los scripts de ejecución (como `npm start`), y los detalles del proyecto. 
 
